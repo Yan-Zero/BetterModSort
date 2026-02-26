@@ -89,6 +89,35 @@ namespace BetterModSort.Hooks
         /// </summary>
         public static int MaxHistoryCount { get; set; } = 100;
 
+        private static string EnsureSaveDataFolder()
+        {
+            string dir = System.IO.Path.Combine(GenFilePaths.SaveDataFolderPath, "BetterModSort");
+            if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
+            return dir;
+        }
+
+        public static string ErrorLogFilePath => System.IO.Path.Combine(EnsureSaveDataFolder(), "BetterModSort.Error.txt");
+        public static string PrevErrorLogFilePath => System.IO.Path.Combine(EnsureSaveDataFolder(), "BetterModSort.Error.Prev.txt");
+
+        static ErrorCaptureHook()
+        {
+            try
+            {
+                if (System.IO.File.Exists(ErrorLogFilePath))
+                {
+                    if (System.IO.File.Exists(PrevErrorLogFilePath))
+                    {
+                        System.IO.File.Delete(PrevErrorLogFilePath);
+                    }
+                    System.IO.File.Move(ErrorLogFilePath, PrevErrorLogFilePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning("[BetterModSort] " + "BMS_Error_BackupFailed".Translate() + ": " + ex);
+            }
+        }
+
         /// <summary>
         /// 从堆栈中查找 DefDatabase.ErrorCheckAllDefs 的声明类型
         /// </summary>
@@ -130,7 +159,7 @@ namespace BetterModSort.Hooks
             string? absFilePath = ExtractLineValue(text, "absFilePath:");
             if (string.IsNullOrEmpty(absFilePath)) return null;
 
-            uint? workshopId = TryExtractWorkshopId(absFilePath);
+            uint? workshopId = TryExtractWorkshopId(absFilePath!);
 
             ModContentPack? mod = null;
             if (workshopId.HasValue)
@@ -138,23 +167,27 @@ namespace BetterModSort.Hooks
 
             mod ??= TryFindModByPath(absFilePath);
 
-            var sb = new StringBuilder();
-            sb.AppendLine(text);
-            sb.Append("  -> [TextureSource] ");
+            var extraInfo = new StringBuilder();
+            extraInfo.Append("  -> [TextureSource] ");
             if (workshopId.HasValue)
-                sb.Append($"[WorkshopId: {workshopId.Value}] ");
+                extraInfo.Append($"[WorkshopId: {workshopId.Value}] ");
 
             if (mod != null)
             {
                 string modName = mod.Name ?? "(unknown)";
                 string pkgId = mod.PackageIdPlayerFacing ?? mod.PackageId ?? "";
-                sb.Append($"[Mod: {modName} ({pkgId})] ");
+                extraInfo.Append($"[Mod: {modName} ({pkgId})]");
             }
             else
-                sb.Append("[Mod: 未匹配] ");
-
-            sb.Append($"[Path: {absFilePath}]");
-            return sb.ToString();
+                extraInfo.Append($"[Mod: {"BMS_Error_ModNotMatched".Translate()}]");
+            int insertIdx = text.IndexOf(absFilePath, StringComparison.OrdinalIgnoreCase);
+            if (insertIdx >= 0)
+            {
+                int nextNewline = text.IndexOf('\n', insertIdx);
+                if (nextNewline >= 0)
+                    return text.Insert(nextNewline + 1, extraInfo.ToString() + "\n");
+            }
+            return text + "\n" + extraInfo.ToString();
         }
 
         private static string? ExtractLineValue(string text, string key)
@@ -240,9 +273,9 @@ namespace BetterModSort.Hooks
                 if (getNamedMethod != null)
                     if (getNamedMethod.Invoke(null, [possibleDefName, false]) is Def def)
                     {
-                        string modName = def.modContentPack?.Name ?? "未知或原版";
-                        string fileName = def.fileName ?? "未知文件";
-                        return $"{text}\n  -> [来源 MOD: {modName}] [文件: {fileName}]";
+                        string modName = def.modContentPack?.Name ?? "BMS_Error_UnknownOrVanilla".Translate();
+                        string fileName = def.fileName ?? "BMS_Error_UnknownFile".Translate();
+                        return $"{text}\n  -> [{"BMS_Error_SourceMod".Translate()}: {modName}] [{"BMS_Error_File".Translate()}: {fileName}]";
                     }
             }
             catch { }
@@ -286,7 +319,7 @@ namespace BetterModSort.Hooks
             if (XmlBuckets.ByDefName.TryGetValue(defName, out var bag) && !bag.IsEmpty)
             {
                 hasAnyInfo = true;
-                sb.AppendLine($"  -> [引用 defName: {defName}] 在以下 Def XML 中被引用:");
+                sb.AppendLine($"  -> [{"BMS_Error_CrossRefUsedIn".Translate(defName)}");
 
                 foreach (var node in bag)
                 {
@@ -294,7 +327,7 @@ namespace BetterModSort.Hooks
                     string nodePath = GetXmlNodePath(node);
 
                     var sourceAsset = !string.IsNullOrEmpty(rootDefType) && !string.IsNullOrEmpty(rootDefName)
-                        ? DefSourceMap.Get(rootDefType, rootDefName)
+                        ? DefSourceMap.Get(rootDefType!, rootDefName!)
                         : null;
 
                     if (sourceAsset != null)
@@ -311,7 +344,7 @@ namespace BetterModSort.Hooks
                         sb.AppendLine($"     - {nodePath}");
 
                     // 2) 在 PatchSourceMap 中查找可能修改了该 Def 的 Patch
-                    var patches = PatchSourceMap.Get(rootDefName)
+                    var patches = PatchSourceMap.Get(rootDefName ?? "")
                         .Where(p => PatchValueContainsDefName(p.Operation, defName))
                         .GroupBy(p => (p.Mod?.PackageId ?? "", p.Operation?.GetType().Name ?? ""))
                         .Select(g => g.First())
@@ -319,7 +352,7 @@ namespace BetterModSort.Hooks
                     if (patches.Count > 0)
                     {
                         hasAnyInfo = true;
-                        sb.AppendLine($"  -> [Patch 涉及 defName: {rootDefName}] 以下 Mod 的 Patch 可能涉及:");
+                        sb.AppendLine($"  -> [{"BMS_Error_PatchInvolving".Translate(rootDefName ?? "")}");
                         foreach (var patchInfo in patches)
                         {
                             var patchMod = patchInfo.Mod;
@@ -365,7 +398,7 @@ namespace BetterModSort.Hooks
                 // 尝试获取 defName 属性或子元素
                 var defNameAttr = current.Attributes?["defName"]?.Value;
                 var defNameChild = current["defName"]?.InnerText;
-                string identifier = defNameAttr ?? defNameChild;
+                string? identifier = defNameAttr ?? defNameChild;
                 if (!string.IsNullOrEmpty(identifier))
                     name = $"{name}[defName={identifier}]";
                 parts.Add(name);
@@ -433,6 +466,17 @@ namespace BetterModSort.Hooks
             if (ErrorHistory.Count > MaxHistoryCount)
                 ErrorHistory.RemoveAt(0);
 
+            try
+            {
+                string textToWrite;
+                if (isEnriched)
+                    textToWrite = $"[{capturedInfo.CapturedTime:yyyy-MM-dd HH:mm:ss}]\n{capturedInfo.ErrorMessage}\n\n";
+                else
+                    textToWrite = GenerateAnalysisOutput(capturedInfo) + "\n" + "BMS_Error_RawStackHeader".Translate() + "\n" + capturedInfo.ErrorMessage + "\n\n";
+                System.IO.File.AppendAllText(ErrorLogFilePath, textToWrite);
+            }
+            catch { }
+
             // 已被路由处理的错误不需要独立输出分析
             if (EnableDebugOutput && !isEnriched)
                 OutputErrorAnalysis(capturedInfo);
@@ -453,12 +497,22 @@ namespace BetterModSort.Hooks
             foreach (var frame in stackTrace.GetFrames())
             {
                 var method = frame.GetMethod();
+                if (method?.DeclaringType == null) continue;
+
                 var assembly = method.DeclaringType.Assembly;
-                if (IsSystemAssembly(assembly.GetName().Name)) continue;
+                var assemblyName = assembly.GetName().Name;
+
+                if (IsSystemAssembly(assemblyName)) continue;
+
+                // 重点排除日志拦截器自身的堆栈，防止所有其他 MOD 的报错被无辜牵连到 BetterModSort
+                // 但保留 BetterModSort 其他业务逻辑（例如 UI、AI 请求）里发生的真实报错
+                if (assemblyName == "BetterModSort" && method.DeclaringType.Namespace == "BetterModSort.Hooks")
+                    continue;
+
                 var modInfo = DllLookupTool.GetModFromAssembly(assembly);
                 if (modInfo != null && !analyzedMods.ContainsKey(modInfo.PackageId))
                 {
-                    modInfo.StackFrameInfo = $"{method.DeclaringType?.FullName}.{method.Name}";
+                    modInfo.StackFrameInfo = $"{method.DeclaringType.FullName}.{method.Name}";
                     analyzedMods[modInfo.PackageId] = modInfo;
                 }
             }
@@ -477,27 +531,31 @@ namespace BetterModSort.Hooks
             return info;
         }
 
-        private static void OutputErrorAnalysis(CapturedErrorInfo info)
+        private static string GenerateAnalysisOutput(CapturedErrorInfo info)
         {
-            var output = "\n[BetterModSort] ========== 错误分析 ==========\n";
-            output += $"[BetterModSort] 时间: {info.CapturedTime:HH:mm:ss}\n";
-            output += $"[BetterModSort] 错误: {TruncateString(info.ErrorMessage ?? "", 200)}\n";
-            output += $"[BetterModSort] 涉及的 MOD ({info.RelatedMods.Count}):\n";
+            var output = $"\n[BetterModSort] {"BMS_Error_AnalysisHeader".Translate()}\n";
+            output += $"{"BMS_Error_Time".Translate()}: {info.CapturedTime:HH:mm:ss}\n";
+            output += $"{"BMS_Error_ErrorText".Translate()}: {TruncateString(info.ErrorMessage ?? "", 200)}\n";
+            output += $"{"BMS_Error_RelatedMods".Translate()} ({info.RelatedMods.Count}):\n";
 
             foreach (var mod in info.RelatedMods)
             {
-                output += $"[BetterModSort]   - [{mod.PackageId}] {mod.ModName}\n";
-                output += $"[BetterModSort]     DLL: {mod.DllName}\n";
+                output += $"  - [{mod.PackageId}] {mod.ModName}\n";
+                output += $"    DLL: {mod.DllName}\n";
                 if (!string.IsNullOrEmpty(mod.StackFrameInfo))
                 {
-                    output += $"[BetterModSort]     位置: {mod.StackFrameInfo}\n";
+                    output += $"    {"BMS_Error_Location".Translate()}: {mod.StackFrameInfo}\n";
                 }
             }
 
-            output += "[BetterModSort] =====================================";
+            output += "BMS_Error_AnalysisFooter".Translate();
+            return output;
+        }
 
+        private static void OutputErrorAnalysis(CapturedErrorInfo info)
+        {
             // 使用 Message 而不是 Error 避免递归
-            Log.Message(output);
+            Log.Message(GenerateAnalysisOutput(info));
         }
 
         private static bool IsSystemAssembly(string assemblyName)
@@ -506,7 +564,7 @@ namespace BetterModSort.Hooks
             {
                 "mscorlib", "System", "Unity", "Mono", 
                 "Assembly-CSharp", "0Harmony", "HarmonyLib",
-                "netstandard", "Microsoft", "BetterModSort"
+                "netstandard", "Microsoft"
             };
 
             return systemPrefixes.Any(prefix => 
@@ -517,7 +575,9 @@ namespace BetterModSort.Hooks
         {
             if (string.IsNullOrEmpty(str) || str.Length <= maxLength)
                 return str;
-            return str[..maxLength] + "...";
+            int len = maxLength;
+            if (char.IsHighSurrogate(str[len - 1])) len--;
+            return str.Substring(0, len) + "...";
         }
 
         /// <summary>
@@ -546,26 +606,6 @@ namespace BetterModSort.Hooks
 
             return stats.OrderByDescending(x => x.Value)
                         .ToDictionary(x => x.Key, x => x.Value);
-        }
-    }
-
-    public class CapturedErrorInfo
-    {
-        public string? ErrorMessage { get; set; }
-        public DateTime CapturedTime { get; set; }
-        public string? StackTraceText { get; set; }
-        public List<ModDllInfo> RelatedMods { get; set; } = [];
-
-        public override string ToString()
-        {
-            return $"[{CapturedTime:HH:mm:ss}] {TruncateString(ErrorMessage ?? "", 50)} - MODs: {string.Join(", ", RelatedMods.Select(m => m.ModName))}";
-        }
-
-        private static string TruncateString(string str, int maxLength)
-        {
-            if (string.IsNullOrEmpty(str) || str.Length <= maxLength)
-                return str;
-            return str[..maxLength] + "...";
         }
     }
 }

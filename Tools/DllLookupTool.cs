@@ -169,10 +169,8 @@ namespace BetterModSort.Tools
 
         private static void EnsureCache()
         {
-            if (_assemblyToModCache == null || _assemblyNameToModCache == null)
-            {
+            if (_assemblyToModCache.Count == 0 || _assemblyNameToModCache.Count == 0)
                 BuildCache();
-            }
         }
     }
 

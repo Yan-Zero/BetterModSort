@@ -10,10 +10,19 @@ namespace BetterModSort.Hooks
     [HarmonyPatch(typeof(ModsConfig), nameof(ModsConfig.TrySortMods))]
     public static class ModsConfig_TrySortMods_Patch
     {
+        public static bool ExecuteVanillaSort = false;
+
         public static bool Prefix()
         {
-            List<ModMetaData> list = ModsConfig.ActiveModsInLoadOrder.ToList();
-            return true;
+            if (ExecuteVanillaSort)
+                return true;
+
+            // AI 排序是实验性功能，需要用户在 MOD 设置中手动启用
+            if (!BetterModSortMod.Settings.EnableAISorting)
+                return true;
+
+            Find.WindowStack.Add(new BetterModSort.AI.Dialog_AILoading());
+            return false;
         }
     }
 
@@ -25,8 +34,8 @@ namespace BetterModSort.Hooks
     {
         private static readonly HashSet<string> _reportedDuplicates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        private static readonly Func<List<string>, Func<ModMetaData, bool>, List<string>> FindConflicts =
-            AccessTools.MethodDelegate<Func<List<string>, Func<ModMetaData, bool>, List<string>>>(AccessTools.Method(typeof(ModsConfig), "FindConflicts"));
+        private static readonly Func<List<string>, Func<ModMetaData, bool>?, List<string>> FindConflicts =
+            AccessTools.MethodDelegate<Func<List<string>, Func<ModMetaData, bool>?, List<string>>>(AccessTools.Method(typeof(ModsConfig), "FindConflicts"));
 
         public static bool Prefix(ref Dictionary<string, string> __result)
         {
@@ -88,17 +97,17 @@ namespace BetterModSort.Hooks
 
             var duplicates = allMods.Where(m => m.PackageId.Equals(packageId, StringComparison.OrdinalIgnoreCase)).ToList();
             var sb = new StringBuilder();
-            sb.AppendLine($"\n[BetterModSort] ========== 检测到重复的 PackageId ==========");
+            sb.AppendLine($"\n[BetterModSort] {"BMS_Patch_DuplicateHeader".Translate()}");
             sb.AppendLine($"[BetterModSort] PackageId: {packageId}");
-            sb.AppendLine($"[BetterModSort] 发现 {duplicates.Count} 个 MOD 使用相同的 PackageId:");
+            sb.AppendLine($"[BetterModSort] {"BMS_Patch_DuplicateFound".Translate(duplicates.Count)}");
             foreach (var m in duplicates)
             {
                 sb.AppendLine($"[BetterModSort]   - {m.Name}");
-                sb.AppendLine($"[BetterModSort]     路径: {m.RootDir?.FullName ?? "未知"}");
-                sb.AppendLine($"[BetterModSort]     来源: {m.Source}");
+                sb.AppendLine($"[BetterModSort]     {"BMS_Patch_Path".Translate()}: {m.RootDir?.FullName ?? "BMS_Patch_Unknown".Translate()}");
+                sb.AppendLine($"[BetterModSort]     {"BMS_Patch_Source".Translate()}: {m.Source}");
             }
-            sb.AppendLine("[BetterModSort] 建议: 请移除重复的 MOD，只保留一个版本。");
-            sb.Append("[BetterModSort] ================================================");
+            sb.AppendLine($"[BetterModSort] {"BMS_Patch_DuplicateAdvice".Translate()}");
+            sb.Append($"[BetterModSort] {"BMS_Patch_DuplicateFooter".Translate()}");
             Log.Warning(sb.ToString());
         }
     }

@@ -147,9 +147,9 @@ namespace BetterModSort.Tools
 
     public class ModDefInfo
     {
-        public ModMetaData ModMetaData { get; set; }
-        public string PackageId { get; set; }
-        public string ModName { get; set; }
+        public ModMetaData? ModMetaData { get; set; }
+        public string PackageId { get; set; } = "";
+        public string ModName { get; set; } = "";
         public List<string> MatchedDefs { get; set; } = new List<string>();
 
         public override string ToString()

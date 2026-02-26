@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>Better Mod Sort</name>
+  <author>Yan</author>
+  <supportedVersions>
+    <li>1.6</li>
+  </supportedVersions>
+  <packageId>com.bettermodsort.rimworld</packageId>
+  <loadAfter>
+    <li>brrainz.harmony</li>
+  </loadAfter>
+  <loadBefore>
+    <li>Ludeon.RimWorld</li>
+  </loadBefore>
+  <modDependencies>
+    <li>
+      <packageId>brrainz.harmony</packageId>
+      <displayName>Harmony</displayName>
+      <steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
+    </li>
+  </modDependencies>
+  <description> !WARNING!
+
+This MOD is still in its early DEVELOPMENT stage and, as its name suggests, may contain many
+bugs.
+
+Implemented functions:
+1. Some error source identifiers.
+
+To be developed:
+1. Automatically sort based on error reports.
+2. Multi-language support
+
+！警告！
+
+这个MOD还处于早期开发状态，目前名不副实，可能存在很多 BUG。
+
+已经实现的功能：
+1. 报错来源标识。
+
+TODO LIST：
+1. 根据报错一键自动排序。
+2. 其他语言
+  </description>
+</ModMetaData>

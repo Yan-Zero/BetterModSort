@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+  <!-- ========== Settings UI ========== -->
+  <BMS_Settings_SectionAI>── AI Connection Config ──</BMS_Settings_SectionAI>
+  <BMS_Settings_LabelApiKey>LLM API Key:</BMS_Settings_LabelApiKey>
+  <BMS_Settings_LabelBaseUrl>LLM Base URL (for OpenAI-compatible APIs, keep up to /chat/completions):</BMS_Settings_LabelBaseUrl>
+  <BMS_Settings_LabelModelName>LLM Model Name (e.g. gpt-4o, deepseek-chat):</BMS_Settings_LabelModelName>
+  <BMS_Settings_SectionExperimental>── Experimental Features ──</BMS_Settings_SectionExperimental>
+  <BMS_Settings_EnableAISorting>Enable AI-assisted sorting (Experimental, replaces vanilla auto-sort)</BMS_Settings_EnableAISorting>
+  <BMS_Settings_EnableAISortingDesc>When enabled, clicking "Auto-sort" will call an LLM to generate soft constraints, then use vanilla topological sort. When disabled, vanilla sorting is used.</BMS_Settings_EnableAISortingDesc>
+  <BMS_Settings_SectionDebug>── Debug Options ──</BMS_Settings_SectionDebug>
+  <BMS_Settings_EnableDebugDump>Enable Debug Dump (write LLM request/response to files)</BMS_Settings_EnableDebugDump>
+  <BMS_Settings_EnableDebugDumpDesc>When enabled, full Prompt and Response of each LLM call will be written to files under SaveData/BetterModSort/.</BMS_Settings_EnableDebugDumpDesc>
+
+  <!-- ========== AI Loading Dialog ========== -->
+  <BMS_AILoading_Requesting>Requesting AI for recommended sorting...</BMS_AILoading_Requesting>
+  <BMS_AILoading_Timeout>Request timed out or was canceled. Please check your network and API URL config.</BMS_AILoading_Timeout>
+  <BMS_AILoading_FaultedStatus>Request threw an exception. Press ~ to view the red error in console.</BMS_AILoading_FaultedStatus>
+  <BMS_AILoading_ParseFailed>Failed to parse AI response. Press ~ to view console for details.</BMS_AILoading_ParseFailed>
+  <BMS_AILoading_SortDone>AI-assisted sorting complete!</BMS_AILoading_SortDone>
+  <BMS_AILoading_BtnClose>Close</BMS_AILoading_BtnClose>
+  <BMS_AILoading_Waiting>Please wait, the AI is thinking</BMS_AILoading_Waiting>
+
+  <!-- ========== LLM Client ========== -->
+  <BMS_LLM_ApiKeyMissing>API Key not configured! Please enter your LLM API Key in the mod settings.</BMS_LLM_ApiKeyMissing>
+
+  <!-- ========== Error Capture Hook ========== -->
+  <BMS_Error_AnalysisHeader>========== Error Analysis ==========</BMS_Error_AnalysisHeader>
+  <BMS_Error_Time>Time</BMS_Error_Time>
+  <BMS_Error_ErrorText>Error</BMS_Error_ErrorText>
+  <BMS_Error_RelatedMods>Related MODs</BMS_Error_RelatedMods>
+  <BMS_Error_Location>Location</BMS_Error_Location>
+  <BMS_Error_AnalysisFooter>=====================================</BMS_Error_AnalysisFooter>
+  <BMS_Error_RawStackHeader>[Raw error text and stack trace]:</BMS_Error_RawStackHeader>
+  <BMS_Error_BackupFailed>Failed to back up previous error file</BMS_Error_BackupFailed>
+  <BMS_Error_ModNotMatched>Not matched</BMS_Error_ModNotMatched>
+  <BMS_Error_UnknownOrVanilla>Unknown or Vanilla</BMS_Error_UnknownOrVanilla>
+  <BMS_Error_UnknownFile>Unknown file</BMS_Error_UnknownFile>
+  <BMS_Error_SourceMod>Source MOD</BMS_Error_SourceMod>
+  <BMS_Error_File>File</BMS_Error_File>
+  <BMS_Error_CrossRefUsedIn>Ref defName: {0}] Referenced in these Def XMLs:</BMS_Error_CrossRefUsedIn>
+  <BMS_Error_PatchInvolving>Patch involving defName: {0}] The following Mod patches may be involved:</BMS_Error_PatchInvolving>
+
+  <!-- ========== Patch: Duplicate Mod Warning ========== -->
+  <BMS_Patch_DuplicateHeader>========== Duplicate PackageId Detected ==========</BMS_Patch_DuplicateHeader>
+  <BMS_Patch_DuplicateFound>{0} MODs found using the same PackageId:</BMS_Patch_DuplicateFound>
+  <BMS_Patch_Path>Path</BMS_Patch_Path>
+  <BMS_Patch_Source>Source</BMS_Patch_Source>
+  <BMS_Patch_DuplicateAdvice>Suggestion: Remove the duplicate MODs, keep only one version.</BMS_Patch_DuplicateAdvice>
+  <BMS_Patch_DuplicateFooter>================================================</BMS_Patch_DuplicateFooter>
+  <BMS_Patch_Unknown>Unknown</BMS_Patch_Unknown>
+
+</LanguageData>
