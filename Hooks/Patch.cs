@@ -5,7 +5,7 @@ using System.Text;
 using HarmonyLib;
 using Verse;
 
-namespace BetterModSort
+namespace BetterModSort.Hooks
 {
     [HarmonyPatch(typeof(ModsConfig), nameof(ModsConfig.TrySortMods))]
     public static class ModsConfig_TrySortMods_Patch

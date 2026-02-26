@@ -14,33 +14,24 @@ namespace BetterModSort.Tools
     /// </summary>
     public static class DllLookupTool
     {
-        private static Dictionary<Assembly, ModContentPack>? _assemblyToModCache;
-        private static Dictionary<string, ModContentPack>? _assemblyNameToModCache;
+        private static Dictionary<Assembly, ModContentPack> _assemblyToModCache = [];
+        private static Dictionary<string, ModContentPack> _assemblyNameToModCache = new Dictionary<string, ModContentPack>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// 构建 Assembly 到 MOD 的映射缓存
         /// </summary>
         public static void BuildCache()
         {
-            _assemblyToModCache = new Dictionary<Assembly, ModContentPack>();
-            _assemblyNameToModCache = new Dictionary<string, ModContentPack>(StringComparer.OrdinalIgnoreCase);
-
             foreach (var mod in LoadedModManager.RunningModsListForReading)
             {
                 if (mod.assemblies?.loadedAssemblies == null) continue;
-
                 foreach (var assembly in mod.assemblies.loadedAssemblies)
                 {
                     if (!_assemblyToModCache.ContainsKey(assembly))
-                    {
                         _assemblyToModCache[assembly] = mod;
-                    }
-
                     var assemblyName = assembly.GetName().Name;
                     if (!_assemblyNameToModCache.ContainsKey(assemblyName))
-                    {
                         _assemblyNameToModCache[assemblyName] = mod;
-                    }
                 }
             }
         }
@@ -54,52 +45,40 @@ namespace BetterModSort.Tools
             var results = new List<ModDllInfo>();
             var stackTrace = new StackTrace(ex, true);
 
-            foreach (var frame in stackTrace.GetFrames() ?? Array.Empty<StackFrame>())
+            foreach (var frame in stackTrace.GetFrames() ?? [])
             {
                 var method = frame.GetMethod();
-                if (method == null) continue;
-
-                var assembly = method.DeclaringType?.Assembly;
-                if (assembly == null) continue;
-
-                var modInfo = GetModFromAssembly(assembly);
+                var modInfo = GetModFromAssembly(method.DeclaringType.Assembly);
                 if (modInfo != null && !results.Any(r => r.PackageId == modInfo.PackageId))
                 {
                     modInfo.StackFrameInfo = $"{method.DeclaringType?.FullName}.{method.Name}";
                     results.Add(modInfo);
                 }
             }
-
             return results;
         }
 
         /// <summary>
         /// 根据 Assembly 获取对应的 MOD
         /// </summary>
-        public static ModDllInfo GetModFromAssembly(Assembly assembly)
+        public static ModDllInfo? GetModFromAssembly(Assembly assembly)
         {
             EnsureCache();
 
             // 优先直接查找 Assembly 对象
             if (_assemblyToModCache.TryGetValue(assembly, out var mod))
-            {
                 return CreateModDllInfo(mod, assembly);
-            }
-
             // 回退到按名称查找
             var assemblyName = assembly.GetName().Name;
             if (_assemblyNameToModCache.TryGetValue(assemblyName, out mod))
-            {
                 return CreateModDllInfo(mod, assembly);
-            }
-
             return null;
         }
 
         /// <summary>
         /// 根据 DLL 名称查找对应的 MOD
         /// </summary>
-        public static ModDllInfo GetModFromDllName(string dllName)
+        public static ModDllInfo? GetModFromDllName(string dllName)
         {
             EnsureCache();
 
@@ -199,12 +178,21 @@ namespace BetterModSort.Tools
 
     public class ModDllInfo
     {
-        public ModContentPack ModContentPack { get; set; }
+        public ModContentPack? ModContentPack { get; set; }
         public string PackageId { get; set; }
         public string ModName { get; set; }
         public string DllName { get; set; }
         public string DllPath { get; set; }
         public string StackFrameInfo { get; set; }
+
+        public ModDllInfo()
+        {
+            PackageId = string.Empty;
+            ModName = string.Empty;
+            DllName = string.Empty;
+            DllPath = string.Empty;
+            StackFrameInfo = string.Empty;
+        }
 
         public override string ToString()
         {
