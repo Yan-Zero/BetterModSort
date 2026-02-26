@@ -19,27 +19,34 @@
       <steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
     </li>
   </modDependencies>
-  <description> !WARNING!
+  <description>[EN]
 
-This MOD is still in its early DEVELOPMENT stage and, as its name suggests, may contain many
-bugs.
+Ever stared at a wall of red errors wondering which mod broke everything? This mod helps you figure that out.
 
-Implemented functions:
-1. Some error source identifiers.
+What it does:
+- When an error pops up, it tries to tell you which mod caused it (by tracing DLLs, XML defs, textures, patches, etc.)
+- Saves all errors to a file (BetterModSort.Error.txt) so you can look at them later or share them for help.
+- Warns you if you accidentally have duplicate mods installed.
 
-To be developed:
-1. Automatically sort based on error reports.
-2. Multi-language support
+Experimental: AI Sorting
+If you plug in an OpenAI-compatible API key in the mod settings, you can let an AI suggest a better mod load order.
 
-！警告！
+Supports English and Simplified Chinese. Translation contributions welcome!
 
-这个MOD还处于早期开发状态，目前名不副实，可能存在很多 BUG。
+---
 
-已经实现的功能：
-1. 报错来源标识。
+[中文]
 
-TODO LIST：
-1. 根据报错一键自动排序。
-2. 其他语言
+红字报错一大堆，到底是哪个 MOD 炸的？
+
+主要功能：
+- 报错时自动分析来源，告诉你是哪个 MOD 的锅（通过分析 DLL、XML Def、材质、Patch 等）。
+- 把所有报错存到文件里（BetterModSort.Error.txt），方便事后翻阅或者发给别人求助。
+- 如果你不小心装了重复的 MOD，会提醒你。
+
+实验性功能：AI 排序
+在 MOD 设置里填入 OpenAI 兼容的 API Key，就可以让大模型帮你建议更好的加载顺序。
+
+支持简体中文和英文，欢迎贡献其他语言的翻译！
   </description>
 </ModMetaData>

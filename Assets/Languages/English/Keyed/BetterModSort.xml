@@ -14,6 +14,7 @@
   <BMS_Settings_EnableDebugDumpDesc>When enabled, full Prompt and Response of each LLM call will be written to files under SaveData/BetterModSort/.</BMS_Settings_EnableDebugDumpDesc>
 
   <!-- ========== AI Loading Dialog ========== -->
+  <BMS_AILoading_AnalyzingDesc>Analyzing and extracting short summary for {0}...</BMS_AILoading_AnalyzingDesc>
   <BMS_AILoading_Requesting>Requesting AI for recommended sorting...</BMS_AILoading_Requesting>
   <BMS_AILoading_Timeout>Request timed out or was canceled. Please check your network and API URL config.</BMS_AILoading_Timeout>
   <BMS_AILoading_FaultedStatus>Request threw an exception. Press ~ to view the red error in console.</BMS_AILoading_FaultedStatus>

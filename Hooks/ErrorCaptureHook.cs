@@ -466,6 +466,10 @@ namespace BetterModSort.Hooks
             if (ErrorHistory.Count > MaxHistoryCount)
                 ErrorHistory.RemoveAt(0);
 
+            // 将本次报错涉及的嫌疑 MOD 追加到 bms.meta.txt（内部去重，用于崩溃后恢复）
+            if (capturedInfo.RelatedMods?.Count > 0)
+                BetterModSort.AI.MetaDataManager.AppendSuspectMods(capturedInfo.RelatedMods);
+
             try
             {
                 string textToWrite;

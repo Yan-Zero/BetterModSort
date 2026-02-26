@@ -21,6 +21,9 @@ namespace BetterModSort
             // 初始化 LLMClient 参数
             SyncLLMClientSettings();
 
+            // 初始化 MetaDataManager：计算当前 LoadOrder Hash，备份或沿用上次会话的嫌疑 MOD 列表
+            AI.MetaDataManager.InitializeCurrentSession();
+
             Log.Message("[BetterModSort] Harmony patches applied.");
         }
 

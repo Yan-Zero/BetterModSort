@@ -49,39 +49,84 @@ namespace BetterModSort.AI
         }
 
         /// <summary>
+        /// 生成用于让 AI 提炼单个 MOD 的短描述的提示词
+        /// </summary>
+        public static string BuildShortDescPrompt(string packageId, string modName, string rawDescription)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("你是一个 RimWorld (边缘世界) 的资深 MOD 冲突诊断专家。");
+            sb.AppendLine("请你通过阅读下面这篇某个 MOD 的完整描述（可能是作者手写的原版或 XML），为其提炼出一段极度精简的【性质简述】。");
+            sb.AppendLine();
+            sb.AppendLine($"【MOD 信息】\n包名: {packageId}\n名称: {modName}");
+            sb.AppendLine();
+            
+            // 如果描述太长，截断它。保留头部即可，头部往往说明了 MOD 的用途。
+            string safeDesc = rawDescription ?? "";
+            if (safeDesc.Length > 2500)
+            {
+                int maxLen = 2500;
+                if (char.IsHighSurrogate(safeDesc[maxLen - 1])) maxLen--;
+                safeDesc = safeDesc.Substring(0, maxLen) + "\n...(截断)...";
+            }
+            sb.AppendLine("【原始描述】");
+            sb.AppendLine(safeDesc);
+            sb.AppendLine();
+            sb.AppendLine("【要求】");
+            sb.AppendLine("1. 重点提取出该 MOD 的『类型』(如：核心库、大型外星人种族、UI 修改、底层重写、内容追加等)。");
+            sb.AppendLine("2. 重点提取出任何作者提及的『前置依赖』、『冲突说明』、『必须排在前面或后面的排序要求』。");
+            sb.AppendLine("3. 不需要复述功能细节（如添加了什么动物），不要使用列表格式，只生成一段连续且紧凑的短文本（字数尽量控制在 150 字以内）。");
+            sb.AppendLine("4. 请直接输出文本结果，不包含 json，不包含任何解释，不要带有 Markdown 加粗等装饰，因为结果将被缓存后紧凑注入到主控节点的上下文中。");
+            
+            return sb.ToString();
+        }
+
+        /// <summary>
         /// 生成用于整体智能排序（软约束）的提示词
         /// </summary>
-        public static string BuildSortingSoftConstraintsPrompt(List<ModMetaData> mods, string errorLogContent)
+        public static string BuildSortingSoftConstraintsPrompt(List<ModMetaData> mods, string errorLogContent, Dictionary<string, string> suspectShortDescs)
         {
             var sb = new StringBuilder();
             sb.AppendLine("你是一个 RimWorld（边缘世界）的专家级 MOD 排序引擎。");
-            sb.AppendLine("我需要你基于以下玩家当前激活的 MOD 列表，以及最近捕捉到可能因为排序不当引起的冲突错误日志，输出一套『临时排序软约束条件』。");
+            sb.AppendLine("我需要你基于以下玩家当前激活的 MOD 列表，近期捕捉到的冲突日志，以及涉事 MOD 的部分性质简述，输出一套『临时排序软约束条件』。");
             sb.AppendLine();
 
-            sb.AppendLine("【当前的 MOD 加载列表（按当前顺序自上而下）】");
+            sb.AppendLine("【当前的 MOD 加载列表（按当前顺序自上而下排列）】");
+            sb.AppendLine("由于 MOD 较多，我们约定使用如下高密度格式标识其现有关系：");
+            sb.AppendLine("格式示范: 序号. [PackageId] ModName (Dep: 前置依赖列表 | Before: 必须在某某之前 | After: 必须在某某之后)");
+            sb.AppendLine("注意：括号内没有说明的项目即为空。");
+            sb.AppendLine();
+
             for (int i = 0; i < mods.Count; i++)
             {
                 var mod = mods[i];
-                sb.AppendLine($"{i + 1}. [{mod.PackageId}] {mod.Name}");
+                var details = new List<string>();
+
                 if (mod.Dependencies != null && mod.Dependencies.Any())
-                {
-                    var deps = string.Join(", ", mod.Dependencies.Select(d => d.packageId));
-                    sb.AppendLine($"   -> 明确依赖 (Dependencies): {deps}");
-                }
+                    details.Add($"Dep: {string.Join(",", mod.Dependencies.Select(d => d.packageId))}");
                 if (mod.LoadBefore != null && mod.LoadBefore.Any())
-                {
-                    sb.AppendLine($"   -> 必须在以下之前 (LoadBefore): {string.Join(", ", mod.LoadBefore)}");
-                }
+                    details.Add($"Before: {string.Join(",", mod.LoadBefore)}");
                 if (mod.LoadAfter != null && mod.LoadAfter.Any())
-                {
-                    sb.AppendLine($"   -> 必须在以下之后 (LoadAfter): {string.Join(", ", mod.LoadAfter)}");
-                }
+                    details.Add($"After: {string.Join(",", mod.LoadAfter)}");
+
+                string suffix = details.Count > 0 ? $" ({string.Join(" | ", details)})" : "";
+                sb.AppendLine($"{i + 1}. [{mod.PackageId}] {mod.Name}{suffix}");
             }
             sb.AppendLine();
 
+            if (suspectShortDescs != null && suspectShortDescs.Count > 0)
+            {
+                sb.AppendLine("【近期报错相关嫌疑 MOD 的性质简述】");
+                sb.AppendLine("这些是根据此前崩溃、抛错统计关联到的关键 MOD，我专门提取了提炼后的短描述，辅助你判断它们的排序：");
+                foreach (var kvp in suspectShortDescs)
+                {
+                    sb.AppendLine($"- [{kvp.Key}]: {kvp.Value}");
+                }
+                sb.AppendLine();
+            }
+
             if (!string.IsNullOrWhiteSpace(errorLogContent))
             {
-                sb.AppendLine("【近期的致命报错（可能暗示潜在冲突）】");
+                sb.AppendLine("【近期的致命报错日志记录（暗示潜在冲突）】");
                 
                 string safeErr = errorLogContent;
                 // 防止传入过长的整个报错文件超出 LLM 上下文限制，适度截短并只保留最新的部分（文本日志末尾为最新）
@@ -107,8 +152,9 @@ namespace BetterModSort.AI
             sb.AppendLine();
             sb.AppendLine("请注意：");
             sb.AppendLine("1. 仅针对真正需要调整顺序、有已知冲突风险或明确依赖（但未在上述清单中体现）的民间 MOD 给定软约束。");
-            sb.AppendLine("2. 不必为所有 MOD 生成规则，只输出必须改变其当前排位的规则！");
-            sb.AppendLine("3. 你的输出【只能包含合法的 JSON 数组结构】，不需要包含任何解释。");
+            sb.AppendLine("2. 根据【嫌疑 MOD 简述】和【报错日志】，推算其中由于加载顺序不对（例如 A 需要借用 B 代码而排在了 B 之前，或是框架前置错乱）导致的问题，制定修复约束！");
+            sb.AppendLine("3. 不必为所有 MOD 生成规则，只输出必须改变其当前排位的规则！");
+            sb.AppendLine("4. 你的输出【只能包含合法的 JSON 数组结构】，不需要包含任何解释。");
             sb.AppendLine();
             sb.AppendLine("JSON 示例格式：");
             sb.AppendLine("```json");

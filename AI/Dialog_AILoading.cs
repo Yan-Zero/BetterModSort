@@ -45,24 +45,64 @@ namespace BetterModSort.AI
         {
             base.PreOpen();
             _statusText = "BMS_AILoading_Requesting".Translate();
-            StartAIRequest();
+            // StartAIRequestAsync 自己管理 _aiTask 或者我们用一个包装 task
+            _aiTask = StartAIRequestAsync();
         }
 
-        private void StartAIRequest()
+        private async Task<string> StartAIRequestAsync()
         {
             var activeMods = ModsConfig.ActiveModsInLoadOrder.ToList();
             
+            // 1. 获取本次（或跨次）嫌疑 MOD 列表
+            var suspectIds = MetaDataManager.GetSuspectPackageIds();
+            var suspectShortDescs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var packageId in suspectIds)
+            {
+                var mod = activeMods.FirstOrDefault(m => string.Equals(m.PackageId, packageId, StringComparison.OrdinalIgnoreCase));
+                if (mod == null) continue;
+
+                string rawDesc = mod.Description ?? "";
+                
+                // 2. 尝试拿本地提炼缓存
+                if (MetaDataManager.TryGetShortDesc(packageId, rawDesc, out string shortDesc))
+                    suspectShortDescs[packageId] = shortDesc;
+                else
+                {
+                    // 3. 缓存失效或不存在，小请求 AI 提炼
+                    _statusText = "BMS_AILoading_AnalyzingDesc".Translate(mod.Name);
+                    string promptShort = PromptBuilder.BuildShortDescPrompt(mod.PackageId, mod.Name, rawDesc);
+                    try
+                    {
+                        string aiShortResult = await LLMClient.SendChatRequestAsync(promptShort, expectJsonFormat: false);
+                        if (!string.IsNullOrWhiteSpace(aiShortResult))
+                        {
+                            MetaDataManager.SaveShortDesc(packageId, rawDesc, aiShortResult.Trim());
+                            suspectShortDescs[packageId] = aiShortResult.Trim();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning($"[BetterModSort] 无法提炼 {packageId} 的短描述: {ex.Message}");
+                    }
+                }
+            }
+
+            // 4. 读取错误日志
+            _statusText = "BMS_AILoading_Requesting".Translate();
             string errorLogContent = "";
             try
             {
-                if (File.Exists(ErrorCaptureHook.ErrorLogFilePath))
-                    errorLogContent = File.ReadAllText(ErrorCaptureHook.ErrorLogFilePath);
+                if (System.IO.File.Exists(ErrorCaptureHook.ErrorLogFilePath))
+                    errorLogContent = System.IO.File.ReadAllText(ErrorCaptureHook.ErrorLogFilePath);
             }
             catch { }
 
-            string prompt = PromptBuilder.BuildSortingSoftConstraintsPrompt(activeMods, errorLogContent);
+            // 5. 组合终极 Prompt
+            string prompt = PromptBuilder.BuildSortingSoftConstraintsPrompt(activeMods, errorLogContent, suspectShortDescs);
             
-            _aiTask = LLMClient.SendChatRequestAsync(prompt, expectJsonFormat: true);
+            // 返回大请求的 Task
+            return await LLMClient.SendChatRequestAsync(prompt, expectJsonFormat: true);
         }
 
         public override void WindowUpdate()

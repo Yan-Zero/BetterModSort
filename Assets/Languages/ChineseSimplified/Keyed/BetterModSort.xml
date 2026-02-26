@@ -14,6 +14,7 @@
   <BMS_Settings_EnableDebugDumpDesc>开启后，每次 LLM 通信的完整 Prompt 和 Response 都会被写入 SaveData/BetterModSort/ 目录下的文件。</BMS_Settings_EnableDebugDumpDesc>
 
   <!-- ========== AI Loading Dialog ========== -->
+  <BMS_AILoading_AnalyzingDesc>正在提炼 {0} 的性质简述...</BMS_AILoading_AnalyzingDesc>
   <BMS_AILoading_Requesting>正在向大模型请求推荐排序...</BMS_AILoading_Requesting>
   <BMS_AILoading_Timeout>请求超时或被取消，请检查网络连接和 API 地址配置。</BMS_AILoading_Timeout>
   <BMS_AILoading_FaultedStatus>请求发生底层异常，详情请按 ~ 查看控制台红色日志。</BMS_AILoading_FaultedStatus>
