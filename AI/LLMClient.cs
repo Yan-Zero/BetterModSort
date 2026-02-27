@@ -1,10 +1,11 @@
-using System;
+﻿using System;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Verse;
+using BetterModSort.Tools;
 
 namespace BetterModSort.AI
 {
@@ -46,52 +47,13 @@ namespace BetterModSort.AI
         public static async Task<string> SendChatRequestAsync(string prompt, bool expectJsonFormat = false)
         {
             if (string.IsNullOrWhiteSpace(ApiKey))
-                throw new InvalidOperationException("BMS_LLM_ApiKeyMissing".Translate());
-
-            object? responseFormat = null;
-            if (expectJsonFormat)
-            {
-                responseFormat = new
-                {
-                    type = "json_schema",
-                    json_schema = new
-                    {
-                        name = "soft_constraints",
-                        strict = true,
-                        schema = new
-                        {
-                            type = "object",
-                            properties = new
-                            {
-                                constraints = new
-                                {
-                                    type = "array",
-                                    items = new
-                                    {
-                                        type = "object",
-                                        properties = new
-                                        {
-                                            PackageId = new { type = "string" },
-                                            LoadBefore = new { type = "array", items = new { type = "string" } },
-                                            LoadAfter = new { type = "array", items = new { type = "string" } }
-                                        },
-                                        required = new[] { "PackageId", "LoadBefore", "LoadAfter" },
-                                        additionalProperties = false
-                                    }
-                                }
-                            },
-                            required = new[] { "constraints" },
-                            additionalProperties = false
-                        }
-                    }
-                };
-            }
+                throw new InvalidOperationException("BMS_LLM_ApiKeyMissing".TranslateSafe());
 
             var requestBody = new
             {
                 model = ModelName,
-                temperature = 0.2,
-                response_format = responseFormat,
+                temperature = 0.4,
+                response_format = expectJsonFormat ? new { type = "json_object" } : null,
                 messages = new[]
                 {
                     new { role = "user", content = prompt }
@@ -152,7 +114,7 @@ namespace BetterModSort.AI
             }
             catch (Exception ex)
             {
-                Log.Warning($"[BetterModSort] Debug Dump 写入失败 ({fileLabel}): {ex.Message}");
+                Log.Warning("[BetterModSort] " + "BMS_Log_DebugDumpWriteFailed".TranslateSafe(fileLabel, ex.Message));
             }
         }
     }

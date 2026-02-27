@@ -1,12 +1,10 @@
 ﻿using HarmonyLib;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Xml;
 using Verse;
+using BetterModSort.Tools;
 
 namespace BetterModSort.Hooks
 {
@@ -44,9 +42,12 @@ namespace BetterModSort.Hooks
                 XmlSourceTracker.Push(loadingAsset, node);
                 // 记录 Def 来源: (defType, defName) -> asset
                 string? defType = node.Name;
-                string? defName = node["defName"]?.InnerText?.Trim() ?? "";
+                string? defName = node["defName"]?.InnerText?.Trim() ?? node.Attributes["Name"]?.Value.Trim() ?? "";
+                XmlAttribute parentNameAttribute = node.Attributes["ParentName"];
+                string? parentName = parentNameAttribute?.Value.Trim();
+                
                 if (!string.IsNullOrEmpty(defName))
-                    DefSourceMap.Add(defType, defName, loadingAsset);
+                    DefSourceMap.Add(defType, defName, loadingAsset, parentName);
             }
         }
 
@@ -62,22 +63,29 @@ namespace BetterModSort.Hooks
     public static class DefSourceMap
     {
         public static readonly ConcurrentDictionary<(string defType, string defName), LoadableXmlAsset> Map = new();
+        public static readonly ConcurrentDictionary<(string defType, string defName), string> ParentNameMap = new();
 
-        public static void Add(string defType, string defName, LoadableXmlAsset asset)
+        public static void Add(string defType, string defName, LoadableXmlAsset asset, string? parent_name = null)
         {
             if (string.IsNullOrEmpty(defType) || string.IsNullOrEmpty(defName)) return;
             Map.TryAdd((defType, defName), asset);
+            if (!string.IsNullOrEmpty(parent_name))
+                ParentNameMap.TryAdd((defType, defName), parent_name ?? "");
         }
 
-        public static LoadableXmlAsset? Get(string defType, string defName)
+        public static LoadableXmlAsset? GetAsset(string defType, string defName)
         {
             return Map.TryGetValue((defType, defName), out var asset) ? asset : null;
+        }
+        public static string? GetParentName(string defType, string defName)
+        {
+            return ParentNameMap.TryGetValue((defType, defName), out var parent) ? parent : null;
         }
 
         /// <summary>
         /// 根据 defName 模糊查找（不指定 defType）
         /// </summary>
-        public static LoadableXmlAsset? GetByDefName(string defName)
+        public static LoadableXmlAsset? GetAssetByDefName(string defName)
         {
             foreach (var kvp in Map)
                 if (kvp.Key.defName == defName)
@@ -85,7 +93,19 @@ namespace BetterModSort.Hooks
             return null;
         }
 
-        public static void Clear() => Map.Clear();
+        public static string? GetParentNameByDefName(string defName)
+        {
+            foreach (var kvp in ParentNameMap)
+                if (kvp.Key.defName == defName)
+                    return kvp.Value;
+            return null;
+        }
+
+        public static void Clear()
+        {
+            Map.Clear();
+            ParentNameMap.Clear();
+        }
     }
 
     public static class XmlBuckets
@@ -124,10 +144,15 @@ namespace BetterModSort.Hooks
     /// </summary>
     public static class PatchSourceMap
     {
+        // key 可以是 defName 也可以是 Name 属性值（用于 abstract/meta Def）
         public static readonly ConcurrentDictionary<string, ConcurrentBag<PatchInfo>> ByDefName = new(StringComparer.Ordinal);
 
         // 匹配 xpath 中的 defName，如 [defName="xxx"] 或 [defName='xxx']
         private static readonly Regex DefNamePattern = new(@"defName\s*=\s*[""']([^""']+)[""']", RegexOptions.Compiled);
+        // 匹配 xpath 中的 @Name 属性，如 [@Name="BasePawn"] 或 [@Name='BaseWeapon']
+        // 也匹配 [Name="xxx"]（无 @ 前缀）用于兼容不同的 xpath 写法
+        // (?<!\w) 避免匹配到 defName 中的 Name 后缀
+        private static readonly Regex NameAttrPattern = new(@"(?<!\w)@?Name\s*=\s*[""']([^""']+)[""']", RegexOptions.Compiled);
         private static readonly FieldInfo? XPathField = typeof(PatchOperationPathed)
             .GetField("xpath", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -135,27 +160,37 @@ namespace BetterModSort.Hooks
         {
             if (operation == null || mod == null) return;
 
-            var defNames = new HashSet<string>(StringComparer.Ordinal);
+            var identifiers = new HashSet<string>(StringComparer.Ordinal);
 
-            // 1) 从 xpath 中提取 defName
+            // 从 xpath 中提取 defName 和 Name 属性值
             if (operation is PatchOperationPathed && XPathField != null)
             {
                 string? xpath = XPathField.GetValue(operation) as string;
                 if (!string.IsNullOrEmpty(xpath))
+                {
+                    // 1) 匹配 defName="xxx"
                     foreach (Match match in DefNamePattern.Matches(xpath))
                         if (match.Success)
                         {
                             string dn = match.Groups[1].Value.Trim();
-                            if (!string.IsNullOrEmpty(dn)) defNames.Add(dn);
+                            if (!string.IsNullOrEmpty(dn)) identifiers.Add(dn);
                         }
+                    // 2) 匹配 @Name="xxx" 或 Name="xxx"（abstract/meta Def）
+                    foreach (Match match in NameAttrPattern.Matches(xpath))
+                        if (match.Success)
+                        {
+                            string name = match.Groups[1].Value.Trim();
+                            if (!string.IsNullOrEmpty(name)) identifiers.Add(name);
+                        }
+                }
             }
-            // 只有匹配上 defName 的才记录
-            if (defNames.Count == 0) return;
+            // 只有匹配上标识符的才记录
+            if (identifiers.Count == 0) return;
 
             var patchInfo = new PatchInfo(mod, operation, findModTarget);
-            foreach (var defName in defNames)
+            foreach (var id in identifiers)
             {
-                var bag = ByDefName.GetOrAdd(defName, _ => []);
+                var bag = ByDefName.GetOrAdd(id, _ => []);
                 bag.Add(patchInfo);
             }
         }
@@ -199,11 +234,11 @@ namespace BetterModSort.Hooks
                         CollectPatchOperations(patch, mod, ref count);
                     }
                 }
-                Log.Message($"[BetterModSort] 已收集 {count} 个 Patch xpath 映射");
+                Log.Message("[BetterModSort] " + "BMS_Log_PatchXpathCollected".TranslateSafe(count));
             }
             catch (Exception ex)
             {
-                Log.Warning($"[BetterModSort] 收集 Patch xpath 失败: {ex.Message}");
+                Log.Warning("[BetterModSort] " + "BMS_Log_PatchXpathFailed".TranslateSafe(ex.Message));
             }
         }
 
@@ -301,7 +336,7 @@ namespace BetterModSort.Hooks
                 int bucketCount = XmlBuckets.ByDefName.Count;
                 int patchCount = PatchSourceMap.ByDefName.Count;
                 XmlTrackingCleanup.ClearAll();
-                Log.Message($"[BetterModSort] XML 追踪数据已清理 (DefSourceMap: {defCount}, XmlBuckets: {bucketCount}, PatchSourceMap: {patchCount})");
+                Log.Message("[BetterModSort] " + "BMS_Log_XmlTrackerCleared".TranslateSafe(defCount, bucketCount, patchCount));
             }, null, false, null);
         }
     }

@@ -40,8 +40,10 @@
   <BMS_Error_UnknownFile>未知文件</BMS_Error_UnknownFile>
   <BMS_Error_SourceMod>来源 MOD</BMS_Error_SourceMod>
   <BMS_Error_File>文件</BMS_Error_File>
-  <BMS_Error_CrossRefUsedIn>引用 defName: {0}] 在以下 Def XML 中被引用:</BMS_Error_CrossRefUsedIn>
-  <BMS_Error_PatchInvolving>Patch 涉及 defName: {0}] 以下 Mod 的 Patch 可能涉及:</BMS_Error_PatchInvolving>
+  <BMS_Error_CrossRefUsedIn>交叉引用被使用</BMS_Error_CrossRefUsedIn>
+  <BMS_Error_PatchInvolving>Patch 可能涉及</BMS_Error_PatchInvolving>
+  <BMS_Error_InheritanceChain>XML 继承链 (ParentName)</BMS_Error_InheritanceChain>
+  <BMS_Error_SourceNotFound>在 DefSourceMap 中未找到来源</BMS_Error_SourceNotFound>
 
   <!-- ========== Patch: Duplicate Mod Warning ========== -->
   <BMS_Patch_DuplicateHeader>========== 检测到重复的 PackageId ==========</BMS_Patch_DuplicateHeader>
@@ -51,5 +53,22 @@
   <BMS_Patch_DuplicateAdvice>建议: 请移除重复的 MOD，只保留一个版本。</BMS_Patch_DuplicateAdvice>
   <BMS_Patch_DuplicateFooter>================================================</BMS_Patch_DuplicateFooter>
   <BMS_Patch_Unknown>未知</BMS_Patch_Unknown>
+
+  <!-- ========== System Logs ========== -->
+  <BMS_Log_EarlyI18nFailed>初始化早期多语言加载器失败：{0}</BMS_Log_EarlyI18nFailed>
+  <BMS_Log_XmlLoadFailed>加载 XML {0} 失败：{1}</BMS_Log_XmlLoadFailed>
+  <BMS_Log_PatchXpathCollected>已收集 {0} 个 Patch xpath 映射</BMS_Log_PatchXpathCollected>
+  <BMS_Log_PatchXpathFailed>收集 Patch xpath 失败: {0}</BMS_Log_PatchXpathFailed>
+  <BMS_Log_XmlTrackerCleared>XML 追踪数据已清理 (DefSourceMap: {0}, XmlBuckets: {1}, PatchSourceMap: {2})</BMS_Log_XmlTrackerCleared>
+  <BMS_Log_HarmonyPatchesApplied>Harmony patches 已应用。</BMS_Log_HarmonyPatchesApplied>
+  <BMS_Log_MetaDataManagerInitFailed>MetaDataManager 初始化会话失败: {0}</BMS_Log_MetaDataManagerInitFailed>
+  <BMS_Log_MetaDataManagerAppendFailed>MetaDataManager 追加嫌疑 MOD 失败: {0}</BMS_Log_MetaDataManagerAppendFailed>
+  <BMS_Log_MetaDataManagerGetSuspectsFailed>MetaDataManager 获取嫌疑 MOD 失败: {0}</BMS_Log_MetaDataManagerGetSuspectsFailed>
+  <BMS_Log_MetaDataManagerTryGetDescFailed>MetaDataManager 尝试获取短描述 ({0}) 失败: {1}</BMS_Log_MetaDataManagerTryGetDescFailed>
+  <BMS_Log_MetaDataManagerSaveDescFailed>MetaDataManager 保存短描述 ({0}) 失败: {1}</BMS_Log_MetaDataManagerSaveDescFailed>
+  <BMS_Log_DebugDumpWriteFailed>Debug Dump 写入失败 ({0}): {1}</BMS_Log_DebugDumpWriteFailed>
+  <BMS_Log_AILoadingExtractFailed>无法提炼 {0} 的短描述: {1}</BMS_Log_AILoadingExtractFailed>
+  <BMS_Log_AILoadingException>LLM 请求崩溃抛出底层异常:\n{0}</BMS_Log_AILoadingException>
+  <BMS_Log_AILoadingParseFailed>解析 AI 返回数据失败: {0}</BMS_Log_AILoadingParseFailed>
 
 </LanguageData>

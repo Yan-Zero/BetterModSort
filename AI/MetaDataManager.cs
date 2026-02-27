@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -83,7 +83,7 @@ namespace BetterModSort.AI
             }
             catch (Exception ex)
             {
-                Log.Warning($"[BetterModSort] MetaDataManager.InitializeCurrentSession 失败: {ex.Message}");
+                Log.Warning("[BetterModSort] " + "BMS_Log_MetaDataManagerInitFailed".TranslateSafe(ex.Message));
             }
         }
 
@@ -111,7 +111,7 @@ namespace BetterModSort.AI
             }
             catch (Exception ex)
             {
-                Log.Warning($"[BetterModSort] MetaDataManager.AppendSuspectMods 失败: {ex.Message}");
+                Log.Warning("[BetterModSort] " + "BMS_Log_MetaDataManagerAppendFailed".TranslateSafe(ex.Message));
             }
         }
 
@@ -143,7 +143,7 @@ namespace BetterModSort.AI
             }
             catch (Exception ex)
             {
-                Log.Warning($"[BetterModSort] MetaDataManager.GetSuspectPackageIds 失败: {ex.Message}");
+                Log.Warning("[BetterModSort] " + "BMS_Log_MetaDataManagerGetSuspectsFailed".TranslateSafe(ex.Message));
             }
             return result;
         }
@@ -176,7 +176,7 @@ namespace BetterModSort.AI
             }
             catch (Exception ex)
             {
-                Log.Warning($"[BetterModSort] MetaDataManager.TryGetShortDesc({packageId}) 失败: {ex.Message}");
+                Log.Warning("[BetterModSort] " + "BMS_Log_MetaDataManagerTryGetDescFailed".TranslateSafe(packageId, ex.Message));
                 return false;
             }
         }
@@ -196,7 +196,7 @@ namespace BetterModSort.AI
             }
             catch (Exception ex)
             {
-                Log.Warning($"[BetterModSort] MetaDataManager.SaveShortDesc({packageId}) 失败: {ex.Message}");
+                Log.Warning("[BetterModSort] " + "BMS_Log_MetaDataManagerSaveDescFailed".TranslateSafe(packageId, ex.Message));
             }
         }
 

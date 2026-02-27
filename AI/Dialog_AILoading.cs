@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using UnityEngine;
+﻿using UnityEngine;
 using Verse;
+using BetterModSort.Tools;
 using RimWorld;
 using Newtonsoft.Json;
 using BetterModSort.Hooks;
@@ -44,7 +41,7 @@ namespace BetterModSort.AI
         public override void PreOpen()
         {
             base.PreOpen();
-            _statusText = "BMS_AILoading_Requesting".Translate();
+            _statusText = "BMS_AILoading_Requesting".TranslateSafe();
             // StartAIRequestAsync 自己管理 _aiTask 或者我们用一个包装 task
             _aiTask = StartAIRequestAsync();
         }
@@ -70,7 +67,7 @@ namespace BetterModSort.AI
                 else
                 {
                     // 3. 缓存失效或不存在，小请求 AI 提炼
-                    _statusText = "BMS_AILoading_AnalyzingDesc".Translate(mod.Name);
+                    _statusText = "BMS_AILoading_AnalyzingDesc".TranslateSafe(mod.Name);
                     string promptShort = PromptBuilder.BuildShortDescPrompt(mod.PackageId, mod.Name, rawDesc);
                     try
                     {
@@ -83,13 +80,13 @@ namespace BetterModSort.AI
                     }
                     catch (Exception ex)
                     {
-                        Log.Warning($"[BetterModSort] 无法提炼 {packageId} 的短描述: {ex.Message}");
+                        Log.Warning("[BetterModSort] " + "BMS_Log_AILoadingExtractFailed".TranslateSafe(packageId, ex.Message));
                     }
                 }
             }
 
             // 4. 读取错误日志
-            _statusText = "BMS_AILoading_Requesting".Translate();
+            _statusText = "BMS_AILoading_Requesting".TranslateSafe();
             string errorLogContent = "";
             try
             {
@@ -114,13 +111,13 @@ namespace BetterModSort.AI
                 _completed = true;
                 if (_aiTask.IsCanceled)
                 {
-                    _statusText = "BMS_AILoading_Timeout".Translate();
+                    _statusText = "BMS_AILoading_Timeout".TranslateSafe();
                     _failed = true;
                 }
                 else if (_aiTask.IsFaulted)
                 {
-                    Log.Error("[BetterModSort] LLM 请求崩溃抛出底层异常:\n" + _aiTask.Exception?.ToString());
-                    _statusText = "BMS_AILoading_FaultedStatus".Translate();
+                    Log.Error("[BetterModSort] " + "BMS_Log_AILoadingException".TranslateSafe(_aiTask.Exception?.ToString() ?? ""));
+                    _statusText = "BMS_AILoading_FaultedStatus".TranslateSafe();
                     _failed = true;
                 }
                 else
@@ -133,12 +130,12 @@ namespace BetterModSort.AI
                         var constraintsResponse = JsonConvert.DeserializeObject<SoftConstraintResponse>(json);
                         ApplyConstraintsAndSort(constraintsResponse?.Constraints);
                         this.Close();
-                        Messages.Message("BMS_AILoading_SortDone".Translate(), MessageTypeDefOf.PositiveEvent, false);
+                        Messages.Message("BMS_AILoading_SortDone".TranslateSafe(), MessageTypeDefOf.PositiveEvent, false);
                     }
                     catch (Exception ex)
                     {
-                        Log.Error("[BetterModSort] 解析 AI 返回数据失败: " + ex);
-                        _statusText = "BMS_AILoading_ParseFailed".Translate();
+                        Log.Error("[BetterModSort] " + "BMS_Log_AILoadingParseFailed".TranslateSafe(ex.ToString()));
+                        _statusText = "BMS_AILoading_ParseFailed".TranslateSafe();
                         _failed = true;
                     }
                 }
@@ -213,7 +210,7 @@ namespace BetterModSort.AI
             if (_failed)
             {
                 Rect closeBtnRect = new Rect(inRect.width / 2 - 50f, inRect.height - 30f, 100f, 30f);
-                if (Widgets.ButtonText(closeBtnRect, "BMS_AILoading_BtnClose".Translate(), true, false, true))
+                if (Widgets.ButtonText(closeBtnRect, "BMS_AILoading_BtnClose".TranslateSafe(), true, false, true))
                 {
                     Close();
                 }
@@ -224,7 +221,7 @@ namespace BetterModSort.AI
                 int dots = (int)(Time.realtimeSinceStartup * 2f) % 4;
                 string dotStr = new('.', dots);
                 Rect dotsRect = new(0, inRect.height / 2 + 20f, inRect.width, 30f);
-                Widgets.Label(dotsRect, "BMS_AILoading_Waiting".Translate() + dotStr);
+                Widgets.Label(dotsRect, "BMS_AILoading_Waiting".TranslateSafe() + dotStr);
             }
 
             Text.Anchor = TextAnchor.UpperLeft;

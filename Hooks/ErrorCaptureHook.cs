@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -114,7 +111,7 @@ namespace BetterModSort.Hooks
             }
             catch (Exception ex)
             {
-                Log.Warning("[BetterModSort] " + "BMS_Error_BackupFailed".Translate() + ": " + ex);
+                Log.Warning("[BetterModSort] " + "BMS_Error_BackupFailed".TranslateSafe() + ": " + ex);
             }
         }
 
@@ -165,7 +162,10 @@ namespace BetterModSort.Hooks
             if (workshopId.HasValue)
                 mod = TryFindModBySteamWorkshopId(workshopId.Value);
 
-            mod ??= TryFindModByPath(absFilePath);
+            if (absFilePath != null)
+            {
+                mod ??= TryFindModByPath(absFilePath);
+            }
 
             var extraInfo = new StringBuilder();
             extraInfo.Append("  -> [TextureSource] ");
@@ -179,7 +179,7 @@ namespace BetterModSort.Hooks
                 extraInfo.Append($"[Mod: {modName} ({pkgId})]");
             }
             else
-                extraInfo.Append($"[Mod: {"BMS_Error_ModNotMatched".Translate()}]");
+                extraInfo.Append($"[Mod: {"BMS_Error_ModNotMatched".TranslateSafe()}]");
             int insertIdx = text.IndexOf(absFilePath, StringComparison.OrdinalIgnoreCase);
             if (insertIdx >= 0)
             {
@@ -258,29 +258,128 @@ namespace BetterModSort.Hooks
             string possibleDefName = text[startIndex..endIndex];
             if (string.IsNullOrEmpty(possibleDefName)) return null;
 
-            // 部分 ToString() 会返回形如 "ThingDef(MyDefName)"，需要简单剔除括号
-            if (possibleDefName.EndsWith(")") && possibleDefName.Contains('('))
-            {
-                int openIdx = possibleDefName.IndexOf('(');
-                possibleDefName = possibleDefName.Substring(openIdx + 1, possibleDefName.Length - openIdx - 2);
-            }
+            var sb = new StringBuilder();
+            sb.AppendLine(text);
+            bool hasAnyInfo = false;
 
             try
             {
                 var defType = declaringType.GetGenericArguments()[0];
-                var getNamedMethod = typeof(DefDatabase<>).MakeGenericType(defType)
-                    .GetMethod("GetNamed", [typeof(string), typeof(bool)]);
-                if (getNamedMethod != null)
-                    if (getNamedMethod.Invoke(null, [possibleDefName, false]) is Def def)
+                string defTypeName = defType.Name;
+                var sourceAsset = DefSourceMap.GetAsset(defTypeName, possibleDefName)
+                    ?? DefSourceMap.GetAssetByDefName(possibleDefName);
+                if (sourceAsset != null)
+                {
+                    hasAnyInfo = true;
+                    var mod = sourceAsset.mod;
+                    string modName = mod?.Name ?? "BMS_Error_UnknownOrVanilla".TranslateSafe();
+                    string pkgId = mod?.PackageIdPlayerFacing ?? mod?.PackageId ?? "";
+                    string file = sourceAsset.FullFilePath ?? sourceAsset.name ?? "";
+                    string sourceLabel = "BMS_Error_SourceMod".TranslateSafe();
+                    string fileLabel2 = "BMS_Error_File".TranslateSafe();
+                    sb.AppendLine($"  -> [{sourceLabel}: {modName} ({pkgId})]");
+                    if (!string.IsNullOrEmpty(file))
+                        sb.AppendLine($"     [{fileLabel2}: {file}]");
+                }
+
+                // 2) 遍历 ParentName 继承链，追踪可能导致错误的父 Def
+                var parentChain = BuildParentChain(defTypeName, possibleDefName);
+                if (parentChain.Count > 0)
+                {
+                    hasAnyInfo = true;
+                    string chainLabel = "BMS_Error_InheritanceChain".TranslateSafe();
+                    sb.AppendLine($"  -> [{chainLabel}]");
+                    foreach (var (parentName, parentAsset, depth) in parentChain)
                     {
-                        string modName = def.modContentPack?.Name ?? "BMS_Error_UnknownOrVanilla".Translate();
-                        string fileName = def.fileName ?? "BMS_Error_UnknownFile".Translate();
-                        return $"{text}\n  -> [{"BMS_Error_SourceMod".Translate()}: {modName}] [{"BMS_Error_File".Translate()}: {fileName}]";
+                        string indent = new string(' ', 5 + depth * 2);
+                        if (parentAsset != null)
+                        {
+                            var pMod = parentAsset.mod;
+                            string pModName = pMod?.Name ?? "(unknown)";
+                            string pPkgId = pMod?.PackageIdPlayerFacing ?? pMod?.PackageId ?? "";
+                            string pFile = parentAsset.FullFilePath ?? parentAsset.name ?? "";
+                            string pFileLabel = "BMS_Error_File".TranslateSafe();
+                            sb.AppendLine($"{indent}- ParentName=\"{parentName}\" [Mod: {pModName} ({pPkgId})]");
+                            if (!string.IsNullOrEmpty(pFile))
+                                sb.AppendLine($"{indent}  {pFileLabel}: {pFile}");
+                        }
+                        else
+                        {
+                            string notFoundLabel = "BMS_Error_SourceNotFound".TranslateSafe();
+                            sb.AppendLine($"{indent}- ParentName=\"{parentName}\" [{notFoundLabel}]");
+                        }
                     }
+                }
+
+                // 4) 检查 PatchSourceMap 中是否有 Patch 修改了该 Def 或其父 Def
+                var allDefNames = new List<string> { possibleDefName };
+                allDefNames.AddRange(parentChain.Select(p => p.parentName));
+
+                var allPatches = allDefNames
+                    .SelectMany(dn => PatchSourceMap.Get(dn).Select(p => (defName: dn, patch: p)))
+                    .GroupBy(x => (x.patch.Mod?.PackageId ?? "", x.patch.Operation?.GetType().Name ?? "", x.defName))
+                    .Select(g => g.First())
+                    .ToList();
+
+                if (allPatches.Count > 0)
+                {
+                    hasAnyInfo = true;
+                    string patchLabel = "BMS_Error_PatchInvolving".TranslateSafe();
+                    sb.AppendLine($"  -> [{patchLabel}: {possibleDefName}]");
+                    foreach (var (targetDefName, patchInfo) in allPatches)
+                    {
+                        var patchMod = patchInfo.Mod;
+                        string patchModName = patchMod?.Name ?? "(unknown)";
+                        string patchPkgId = patchMod?.PackageIdPlayerFacing ?? patchMod?.PackageId ?? "";
+                        string opType = patchInfo.Operation?.GetType().Name ?? "PatchOperation";
+                        string findModInfo = !string.IsNullOrEmpty(patchInfo.FindModTarget)
+                            ? $" (FindMod: {patchInfo.FindModTarget})"
+                            : "";
+                        string targetInfo = targetDefName != possibleDefName
+                            ? $" (-> parent: {targetDefName})"
+                            : "";
+                        sb.AppendLine($"     - [Mod: {patchModName} ({patchPkgId})] {opType}{findModInfo}{targetInfo}");
+                    }
+                }
             }
             catch { }
 
-            return null;
+            return hasAnyInfo ? sb.ToString().TrimEnd() : null;
+        }
+
+        /// <summary>
+        /// 沿 ParentName 继承链向上遍历，收集所有祖先 Def 的来源信息。
+        /// 最多遍历 10 层以防止循环引用。
+        /// </summary>
+        private static List<(string parentName, LoadableXmlAsset? asset, int depth)> BuildParentChain(
+            string defTypeName, string defName, int maxDepth = 10)
+        {
+            var result = new List<(string, LoadableXmlAsset?, int)>();
+            var visited = new HashSet<string>(StringComparer.Ordinal) { defName };
+
+            string? currentName = defName;
+            int depth = 0;
+
+            while (depth < maxDepth)
+            {
+                // 先用精确的 (defType, defName) 查找 ParentName
+                string? parentName = DefSourceMap.GetParentName(defTypeName, currentName!);
+                // 如果精确查找失败，使用模糊查找
+                parentName ??= DefSourceMap.GetParentNameByDefName(currentName!);
+
+                if (string.IsNullOrEmpty(parentName) || !visited.Add(parentName!))
+                    break;
+
+                // 查找 parent 的 asset
+                var parentAsset = DefSourceMap.GetAsset(defTypeName, parentName!)
+                    ?? DefSourceMap.GetAssetByDefName(parentName!);
+
+                result.Add((parentName!, parentAsset, depth));
+                currentName = parentName;
+                depth++;
+            }
+
+            return result;
         }
 
         private static string? TryGetXmlSource(string text)
@@ -310,7 +409,7 @@ namespace BetterModSort.Hooks
             string defName = text[defNameStart..defNameEnd].Trim();
             if (string.IsNullOrEmpty(defName)) return null;
 
-            var sb = new System.Text.StringBuilder();
+            var sb = new StringBuilder();
             sb.AppendLine(text);
 
             bool hasAnyInfo = false;
@@ -319,7 +418,8 @@ namespace BetterModSort.Hooks
             if (XmlBuckets.ByDefName.TryGetValue(defName, out var bag) && !bag.IsEmpty)
             {
                 hasAnyInfo = true;
-                sb.AppendLine($"  -> [{"BMS_Error_CrossRefUsedIn".Translate(defName)}");
+                string crossRefLabel = "BMS_Error_CrossRefUsedIn".TranslateSafe();
+                sb.AppendLine($"  -> [{crossRefLabel}: {defName}]");
 
                 foreach (var node in bag)
                 {
@@ -327,7 +427,7 @@ namespace BetterModSort.Hooks
                     string nodePath = GetXmlNodePath(node);
 
                     var sourceAsset = !string.IsNullOrEmpty(rootDefType) && !string.IsNullOrEmpty(rootDefName)
-                        ? DefSourceMap.Get(rootDefType!, rootDefName!)
+                        ? DefSourceMap.GetAsset(rootDefType!, rootDefName!)
                         : null;
 
                     if (sourceAsset != null)
@@ -352,7 +452,8 @@ namespace BetterModSort.Hooks
                     if (patches.Count > 0)
                     {
                         hasAnyInfo = true;
-                        sb.AppendLine($"  -> [{"BMS_Error_PatchInvolving".Translate(rootDefName ?? "")}");
+                        string patchLabel2 = "BMS_Error_PatchInvolving".TranslateSafe();
+                        sb.AppendLine($"  -> [{patchLabel2}: {rootDefName ?? ""}]");
                         foreach (var patchInfo in patches)
                         {
                             var patchMod = patchInfo.Mod;
@@ -476,7 +577,7 @@ namespace BetterModSort.Hooks
                 if (isEnriched)
                     textToWrite = $"[{capturedInfo.CapturedTime:yyyy-MM-dd HH:mm:ss}]\n{capturedInfo.ErrorMessage}\n\n";
                 else
-                    textToWrite = GenerateAnalysisOutput(capturedInfo) + "\n" + "BMS_Error_RawStackHeader".Translate() + "\n" + capturedInfo.ErrorMessage + "\n\n";
+                    textToWrite = GenerateAnalysisOutput(capturedInfo) + "\n" + "BMS_Error_RawStackHeader".TranslateSafe() + "\n" + capturedInfo.ErrorMessage + "\n\n";
                 System.IO.File.AppendAllText(ErrorLogFilePath, textToWrite);
             }
             catch { }
@@ -537,10 +638,10 @@ namespace BetterModSort.Hooks
 
         private static string GenerateAnalysisOutput(CapturedErrorInfo info)
         {
-            var output = $"\n[BetterModSort] {"BMS_Error_AnalysisHeader".Translate()}\n";
-            output += $"{"BMS_Error_Time".Translate()}: {info.CapturedTime:HH:mm:ss}\n";
-            output += $"{"BMS_Error_ErrorText".Translate()}: {TruncateString(info.ErrorMessage ?? "", 200)}\n";
-            output += $"{"BMS_Error_RelatedMods".Translate()} ({info.RelatedMods.Count}):\n";
+            var output = $"\n[BetterModSort] {"BMS_Error_AnalysisHeader".TranslateSafe()}\n";
+            output += $"{"BMS_Error_Time".TranslateSafe()}: {info.CapturedTime:HH:mm:ss}\n";
+            output += $"{"BMS_Error_ErrorText".TranslateSafe()}: {TruncateString(info.ErrorMessage ?? "", 200)}\n";
+            output += $"{"BMS_Error_RelatedMods".TranslateSafe()} ({info.RelatedMods.Count}):\n";
 
             foreach (var mod in info.RelatedMods)
             {
@@ -548,11 +649,11 @@ namespace BetterModSort.Hooks
                 output += $"    DLL: {mod.DllName}\n";
                 if (!string.IsNullOrEmpty(mod.StackFrameInfo))
                 {
-                    output += $"    {"BMS_Error_Location".Translate()}: {mod.StackFrameInfo}\n";
+                    output += $"    {"BMS_Error_Location".TranslateSafe()}: {mod.StackFrameInfo}\n";
                 }
             }
 
-            output += "BMS_Error_AnalysisFooter".Translate();
+            output += "BMS_Error_AnalysisFooter".TranslateSafe();
             return output;
         }
 
@@ -581,7 +682,7 @@ namespace BetterModSort.Hooks
                 return str;
             int len = maxLength;
             if (char.IsHighSurrogate(str[len - 1])) len--;
-            return str.Substring(0, len) + "...";
+            return str[..len] + "...";
         }
 
         /// <summary>

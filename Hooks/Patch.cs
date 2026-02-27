@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using HarmonyLib;
 using Verse;
+using BetterModSort.Tools;
 
 namespace BetterModSort.Hooks
 {
@@ -57,25 +58,25 @@ namespace BetterModSort.Hooks
 
                 ModMetaData activeModWithIdentifier = ModLister.GetActiveModWithIdentifier(mod.PackageId);
                 if (activeModWithIdentifier != null && mod != activeModWithIdentifier)
-                    sb.AppendLine("ModWithSameIdAlreadyActive".Translate(activeModWithIdentifier.Name));
+                    sb.AppendLine("ModWithSameIdAlreadyActive".TranslateSafe(activeModWithIdentifier.Name));
 
                 List<string> incompatible = FindConflicts(mod.IncompatibleWith, null);
                 if (incompatible.Any())
-                    sb.AppendLine("ModIncompatibleWithTip".Translate(incompatible.ToCommaList(useAnd: true)));
+                    sb.AppendLine("ModIncompatibleWithTip".TranslateSafe(incompatible.ToCommaList(useAnd: true)));
 
                 // 合并 LoadBefore 与 ForceLoadBefore，统一检测并输出一次
                 List<string> beforeConflicts = FindConflicts(MergeLists(mod.LoadBefore, mod.ForceLoadBefore), m => mods.IndexOf(m) < i);
                 if (beforeConflicts.Any())
-                    sb.AppendLine("ModMustLoadBefore".Translate(beforeConflicts.ToCommaList(useAnd: true)));
+                    sb.AppendLine("ModMustLoadBefore".TranslateSafe(beforeConflicts.ToCommaList(useAnd: true)));
 
                 // 合并 LoadAfter 与 ForceLoadAfter，统一检测并输出一次
                 List<string> afterConflicts = FindConflicts(MergeLists(mod.LoadAfter, mod.ForceLoadAfter), m => mods.IndexOf(m) > i);
                 if (afterConflicts.Any())
-                    sb.AppendLine("ModMustLoadAfter".Translate(afterConflicts.ToCommaList(useAnd: true)));
+                    sb.AppendLine("ModMustLoadAfter".TranslateSafe(afterConflicts.ToCommaList(useAnd: true)));
 
                 List<string> unsatisfied = mod.UnsatisfiedDependencies();
                 if (unsatisfied.Any())
-                    sb.AppendLine("ModUnsatisfiedDependency".Translate(unsatisfied.ToCommaList(useAnd: true)));
+                    sb.AppendLine("ModUnsatisfiedDependency".TranslateSafe(unsatisfied.ToCommaList(useAnd: true)));
 
                 dictionary.Add(mod.PackageId, sb.ToString().TrimEndNewlines());
             }
@@ -97,17 +98,17 @@ namespace BetterModSort.Hooks
 
             var duplicates = allMods.Where(m => m.PackageId.Equals(packageId, StringComparison.OrdinalIgnoreCase)).ToList();
             var sb = new StringBuilder();
-            sb.AppendLine($"\n[BetterModSort] {"BMS_Patch_DuplicateHeader".Translate()}");
+            sb.AppendLine($"\n[BetterModSort] {"BMS_Patch_DuplicateHeader".TranslateSafe()}");
             sb.AppendLine($"[BetterModSort] PackageId: {packageId}");
-            sb.AppendLine($"[BetterModSort] {"BMS_Patch_DuplicateFound".Translate(duplicates.Count)}");
+            sb.AppendLine($"[BetterModSort] {"BMS_Patch_DuplicateFound".TranslateSafe(duplicates.Count)}");
             foreach (var m in duplicates)
             {
                 sb.AppendLine($"[BetterModSort]   - {m.Name}");
-                sb.AppendLine($"[BetterModSort]     {"BMS_Patch_Path".Translate()}: {m.RootDir?.FullName ?? "BMS_Patch_Unknown".Translate()}");
-                sb.AppendLine($"[BetterModSort]     {"BMS_Patch_Source".Translate()}: {m.Source}");
+                sb.AppendLine($"[BetterModSort]     {"BMS_Patch_Path".TranslateSafe()}: {m.RootDir?.FullName ?? "BMS_Patch_Unknown".TranslateSafe()}");
+                sb.AppendLine($"[BetterModSort]     {"BMS_Patch_Source".TranslateSafe()}: {m.Source}");
             }
-            sb.AppendLine($"[BetterModSort] {"BMS_Patch_DuplicateAdvice".Translate()}");
-            sb.Append($"[BetterModSort] {"BMS_Patch_DuplicateFooter".Translate()}");
+            sb.AppendLine($"[BetterModSort] {"BMS_Patch_DuplicateAdvice".TranslateSafe()}");
+            sb.Append($"[BetterModSort] {"BMS_Patch_DuplicateFooter".TranslateSafe()}");
             Log.Warning(sb.ToString());
         }
     }

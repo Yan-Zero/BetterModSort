@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using BetterModSort.Tools;
+﻿using BetterModSort.Tools;
 
 namespace BetterModSort.Hooks
 {
@@ -23,7 +20,7 @@ namespace BetterModSort.Hooks
                 return str;
             int len = maxLength;
             if (char.IsHighSurrogate(str[len - 1])) len--;
-            return str.Substring(0, len) + "...";
+            return str[..len] + "...";
         }
     }
 }

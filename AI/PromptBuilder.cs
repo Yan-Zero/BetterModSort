@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,9 +34,7 @@ namespace BetterModSort.AI
                 sb.AppendLine(string.Join("\n", relatedIds));
             }
             else
-            {
                 sb.AppendLine("（无，系统未能根据上下文匹配到特定的民间 MOD，请根据文本自身的标识分析）");
-            }
             sb.AppendLine();
 
             sb.AppendLine("【要求】");
@@ -118,9 +116,7 @@ namespace BetterModSort.AI
                 sb.AppendLine("【近期报错相关嫌疑 MOD 的性质简述】");
                 sb.AppendLine("这些是根据此前崩溃、抛错统计关联到的关键 MOD，我专门提取了提炼后的短描述，辅助你判断它们的排序：");
                 foreach (var kvp in suspectShortDescs)
-                {
                     sb.AppendLine($"- [{kvp.Key}]: {kvp.Value}");
-                }
                 sb.AppendLine();
             }
 
