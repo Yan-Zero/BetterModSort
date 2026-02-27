@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+  <!-- ========== Settings UI ========== -->
+  <BMS_Settings_SectionAI>── Конфигурация подключения ИИ ──</BMS_Settings_SectionAI>
+  <BMS_Settings_LabelApiKey>Ключ API LLM:</BMS_Settings_LabelApiKey>
+  <BMS_Settings_LabelBaseUrl>Базовый URL LLM (для API, совместимых с OpenAI, до /chat/completions):</BMS_Settings_LabelBaseUrl>
+  <BMS_Settings_LabelModelName>Название модели LLM (например, gpt-4o, deepseek-chat):</BMS_Settings_LabelModelName>
+  <BMS_Settings_SectionExperimental>── Экспериментальные функции ──</BMS_Settings_SectionExperimental>
+  <BMS_Settings_EnableAISorting>Включить сортировку с помощью ИИ (Экспериментально, заменяет ванильную автосортировку)</BMS_Settings_EnableAISorting>
+  <BMS_Settings_EnableAISortingDesc>Если включено, нажатие кнопки «Автосортировка» вызовет LLM для генерации мягких ограничений, а затем будет использована ванильная топологическая сортировка. Если выключено, используется стандартная сортировка.</BMS_Settings_EnableAISortingDesc>
+  <BMS_Settings_SectionDebug>── Опции отладки ──</BMS_Settings_SectionDebug>
+  <BMS_Settings_EnableDebugDump>Включить дамп отладки (запись запросов/ответов LLM в файлы)</BMS_Settings_EnableDebugDump>
+  <BMS_Settings_EnableDebugDumpDesc>Если включено, полный текст запроса (Prompt) и ответа каждого вызова LLM будет записываться в файлы в директории SaveData/BetterModSort/.</BMS_Settings_EnableDebugDumpDesc>
+
+  <!-- ========== AI Loading Dialog ========== -->
+  <BMS_AILoading_AnalyzingDesc>Анализ и извлечение краткого описания для {0}...</BMS_AILoading_AnalyzingDesc>
+  <BMS_AILoading_Requesting>Запрос к ИИ для рекомендуемой сортировки...</BMS_AILoading_Requesting>
+  <BMS_AILoading_Timeout>Время ожидания запроса истекло или он был отменён. Пожалуйста, проверьте сеть и настройки URL API.</BMS_AILoading_Timeout>
+  <BMS_AILoading_FaultedStatus>Запрос вызвал ошибку (exception). Нажмите «~», чтобы просмотреть красную ошибку в консоли.</BMS_AILoading_FaultedStatus>
+  <BMS_AILoading_ParseFailed>Не удалось обработать ответ ИИ. Нажмите «~», чтобы просмотреть подробности в консоли.</BMS_AILoading_ParseFailed>
+  <BMS_AILoading_SortDone>Сортировка с помощью ИИ завершена!</BMS_AILoading_SortDone>
+  <BMS_AILoading_BtnClose>Закрыть</BMS_AILoading_BtnClose>
+  <BMS_AILoading_Waiting>Пожалуйста, подождите, ИИ думает</BMS_AILoading_Waiting>
+
+  <!-- ========== LLM Client ========== -->
+  <BMS_LLM_ApiKeyMissing>Ключ API не настроен! Пожалуйста, введите ваш Ключ API LLM в настройках мода.</BMS_LLM_ApiKeyMissing>
+
+  <!-- ========== Error Capture Hook ========== -->
+  <BMS_Error_AnalysisHeader>========== Анализ ошибки ==========</BMS_Error_AnalysisHeader>
+  <BMS_Error_Time>Время</BMS_Error_Time>
+  <BMS_Error_ErrorText>Ошибка</BMS_Error_ErrorText>
+  <BMS_Error_RelatedMods>Связанные МОДЫ</BMS_Error_RelatedMods>
+  <BMS_Error_Location>Расположение</BMS_Error_Location>
+  <BMS_Error_AnalysisFooter>=====================================</BMS_Error_AnalysisFooter>
+  <BMS_Error_RawStackHeader>[Исходный текст ошибки и трассировка стека]:</BMS_Error_RawStackHeader>
+  <BMS_Error_BackupFailed>Не удалось создать резервную копию предыдущего файла ошибки</BMS_Error_BackupFailed>
+  <BMS_Error_ModNotMatched>Не найдено соответствий</BMS_Error_ModNotMatched>
+  <BMS_Error_UnknownOrVanilla>Неизвестно или Ваниль</BMS_Error_UnknownOrVanilla>
+  <BMS_Error_UnknownFile>Неизвестный файл</BMS_Error_UnknownFile>
+  <BMS_Error_SourceMod>Исходный МОД</BMS_Error_SourceMod>
+  <BMS_Error_File>Файл</BMS_Error_File>
+  <BMS_Error_CrossRefUsedIn>Cross-ref использован в</BMS_Error_CrossRefUsedIn>
+  <BMS_Error_PatchInvolving>Возможно участие патча</BMS_Error_PatchInvolving>
+  <BMS_Error_InheritanceChain>Цепочка наследования XML (ParentName)</BMS_Error_InheritanceChain>
+  <BMS_Error_SourceNotFound>Источник не найден в DefSourceMap</BMS_Error_SourceNotFound>
+
+  <!-- ========== Patch: Duplicate Mod Warning ========== -->
+  <BMS_Patch_DuplicateHeader>========== Обнаружен дубликат PackageId ==========</BMS_Patch_DuplicateHeader>
+  <BMS_Patch_DuplicateFound>Найдено {0} модов, использующих один и тот же PackageId:</BMS_Patch_DuplicateFound>
+  <BMS_Patch_Path>Путь</BMS_Patch_Path>
+  <BMS_Patch_Source>Источник</BMS_Patch_Source>
+  <BMS_Patch_DuplicateAdvice>Рекомендация: Удалите дубликаты модов, оставив только одну версию.</BMS_Patch_DuplicateAdvice>
+  <BMS_Patch_DuplicateFooter>================================================</BMS_Patch_DuplicateFooter>
+  <BMS_Patch_Unknown>Неизвестно</BMS_Patch_Unknown>
+
+  <!-- ========== System Logs ========== -->
+  <BMS_Log_EarlyI18nFailed>Ошибка ранней инициализации i18n: {0}</BMS_Log_EarlyI18nFailed>
+  <BMS_Log_XmlLoadFailed>Не удалось загрузить XML из {0}: {1}</BMS_Log_XmlLoadFailed>
+  <BMS_Log_PatchXpathCollected>Собрано {0} сопоставлений Patch xpath</BMS_Log_PatchXpathCollected>
+  <BMS_Log_PatchXpathFailed>Не удалось собрать Patch xpath: {0}</BMS_Log_PatchXpathFailed>
+  <BMS_Log_XmlTrackerCleared>Данные отслеживания XML очищены (DefSourceMap: {0}, XmlBuckets: {1}, PatchSourceMap: {2})</BMS_Log_XmlTrackerCleared>
+  <BMS_Log_HarmonyPatchesApplied>Патчи Harmony применены.</BMS_Log_HarmonyPatchesApplied>
+  <BMS_Log_MetaDataManagerInitFailed>Ошибка MetaDataManager.InitializeCurrentSession: {0}</BMS_Log_MetaDataManagerInitFailed>
+  <BMS_Log_MetaDataManagerAppendFailed>Ошибка MetaDataManager.AppendSuspectMods: {0}</BMS_Log_MetaDataManagerAppendFailed>
+  <BMS_Log_MetaDataManagerGetSuspectsFailed>Ошибка MetaDataManager.GetSuspectPackageIds: {0}</BMS_Log_MetaDataManagerGetSuspectsFailed>
+  <BMS_Log_MetaDataManagerTryGetDescFailed>Ошибка MetaDataManager.TryGetShortDesc({0}): {1}</BMS_Log_MetaDataManagerTryGetDescFailed>
+  <BMS_Log_MetaDataManagerSaveDescFailed>Ошибка MetaDataManager.SaveShortDesc({0}): {1}</BMS_Log_MetaDataManagerSaveDescFailed>
+  <BMS_Log_DebugDumpWriteFailed>Ошибка записи Debug Dump ({0}): {1}</BMS_Log_DebugDumpWriteFailed>
+  <BMS_Log_AILoadingExtractFailed>Не удалось извлечь краткое описание для {0}: {1}</BMS_Log_AILoadingExtractFailed>
+  <BMS_Log_AILoadingException>Запрос к LLM вызвал внутреннее исключение:\n{0}</BMS_Log_AILoadingException>
+  <BMS_Log_AILoadingParseFailed>Не удалось обработать ответ ИИ: {0}</BMS_Log_AILoadingParseFailed>
+
+</LanguageData>

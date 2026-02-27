@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
-  <name>Better Mod Sort</name>
+  <name>Better Mod Sort(And Error Inspector)</name>
   <author>Yan</author>
   <supportedVersions>
     <li>1.6</li>
@@ -21,15 +21,19 @@
   </modDependencies>
   <description>[EN]
 
-Ever stared at a wall of red errors wondering which mod broke everything? This mod helps you figure that out.
+Ever stared at a wall of red errors wondering which mod broke everything? This mod helps you
+figure that out.
 
 What it does:
-- When an error pops up, it tries to tell you which mod caused it (by tracing DLLs, XML defs, textures, patches, etc.)
-- Saves all errors to a file (BetterModSort.Error.txt) so you can look at them later or share them for help.
+- When an error pops up, it tries to tell you which mod caused it (by tracing DLLs, XML defs,
+textures, patches, etc.)
+- Saves all errors to a file (BetterModSort.Error.txt) so you can look at them later or share
+them for help.
 - Warns you if you accidentally have duplicate mods installed.
 
 Experimental: AI Sorting
-If you plug in an OpenAI-compatible API key in the mod settings, you can let an AI suggest a better mod load order.
+If you plug in an OpenAI-compatible API key in the mod settings, you can let an AI suggest a
+better mod load order.
 
 Supports English and Simplified Chinese. Translation contributions welcome!
 

@@ -37,17 +37,20 @@ namespace BetterModSort.Hooks
         [HarmonyPriority(Priority.First)]
         static void Prefix(XmlNode node, LoadableXmlAsset loadingAsset)
         {
-            if (loadingAsset != null)
+            if (loadingAsset != null && node != null)
             {
                 XmlSourceTracker.Push(loadingAsset, node);
                 // 记录 Def 来源: (defType, defName) -> asset
                 string? defType = node.Name;
-                string? defName = node["defName"]?.InnerText?.Trim() ?? node.Attributes["Name"]?.Value.Trim() ?? "";
-                XmlAttribute parentNameAttribute = node.Attributes["ParentName"];
-                string? parentName = parentNameAttribute?.Value.Trim();
-                
+                string? defName = node["defName"]?.InnerText?.Trim();
+                string? parentName = null;
+                if (node.Attributes != null) {
+                    if (string.IsNullOrEmpty(defName))
+                        defName = node.Attributes["Name"]?.Value.Trim() ?? "";
+                    parentName = node.Attributes["ParentName"]?.Value.Trim() ?? ""; 
+                }
                 if (!string.IsNullOrEmpty(defName))
-                    DefSourceMap.Add(defType, defName, loadingAsset, parentName);
+                    DefSourceMap.Add(defType, defName!, loadingAsset, parentName);
             }
         }
 
