@@ -20,37 +20,29 @@
     </li>
   </modDependencies>
   <description>[EN]
+Installed a bunch of mods but don't know how to order them?
+This mod can connect to Large Language Models (LLMs) and let AI suggest a more reasonable load order based on your mod list and actual error reports.
 
-Ever stared at a wall of red errors wondering which mod broke everything? This mod helps you
-figure that out.
+To let the AI know which mods might have conflicts, this mod will automatically intercept runtime errors in the background, analyze which mod caused them, and record this information as reference data for the AI sorting.
 
-What it does:
-- When an error pops up, it tries to tell you which mod caused it (by tracing DLLs, XML defs,
-textures, patches, etc.)
-- Saves all errors to a file (BetterModSort.Error.txt) so you can look at them later or share
-them for help.
-- Warns you if you accidentally have duplicate mods installed.
+Usage: Play a game normally first (or load a game once) to let the mod collect error info for the AI, and then use the AI sorting for better results.
 
-Experimental: AI Sorting
-If you plug in an OpenAI-compatible API key in the mod settings, you can let an AI suggest a
-better mod load order.
+Error Source Analysis:
+Even without AI sorting, this feature helps you find the culprit of red errors. It traces DLLs, XML defs, textures, patches, and XML inheritance. Results are saved to BetterModSort.Error.txt and printed to the console.
 
-Supports English and Simplified Chinese. Translation contributions welcome!
+Supports English, Simplified Chinese, and Russian.
 
 ---
 
 [中文]
+装了一堆 MOD，不知道怎么排加载顺序？
+这个 MOD 可以接入大模型（LLM），让 AI 根据你实际遇到的报错情况，帮你建议一个更合理的加载顺序。
 
-红字报错一大堆，到底是哪个 MOD 炸的？
+由于需要参考报错来分析哪些 MOD 之间可能有冲突，所以一般的用法是：先正常玩一局（或者至少加载一次游戏），让 MOD 在后台收集并记录报错信息，然后再点击 AI 排序，效果会比较好。
 
-主要功能：
-- 报错时自动分析来源，告诉你是哪个 MOD 的锅（通过分析 DLL、XML Def、材质、Patch 等）。
-- 把所有报错存到文件里（BetterModSort.Error.txt），方便事后翻阅或者发给别人求助。
-- 如果你不小心装了重复的 MOD，会提醒你。
+报错来源分析：
+即使不用 AI 排序，它也能帮你查出红字到底是哪个 MOD 引起的！会自动分析 DLL 堆栈、XML 来源、Patch xpath 和材质路径，把结果保存到存档目录下 BetterModSort.Error.txt，并输出在游戏控制台。
 
-实验性功能：AI 排序
-在 MOD 设置里填入 OpenAI 兼容的 API Key，就可以让大模型帮你建议更好的加载顺序。
-
-支持简体中文和英文，欢迎贡献其他语言的翻译！
+支持简中、英文、俄语。
   </description>
 </ModMetaData>

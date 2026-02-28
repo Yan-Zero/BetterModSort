@@ -22,7 +22,7 @@ namespace BetterModSort.Hooks
             if (!BetterModSortMod.Settings.EnableAISorting)
                 return true;
 
-            Find.WindowStack.Add(new BetterModSort.AI.Dialog_AILoading());
+            Find.WindowStack.Add(new AI.Dialog_AILoading());
             return false;
         }
     }

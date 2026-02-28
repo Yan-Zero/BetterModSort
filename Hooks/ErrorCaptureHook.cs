@@ -3,68 +3,11 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
-using HarmonyLib;
 using Verse;
 using BetterModSort.Tools;
 
 namespace BetterModSort.Hooks
 {
-    /// <summary>
-    /// 错误捕获 Hook - 自动捕获错误并输出对应的 DLL 和 MOD 信息
-    /// </summary>
-    [HarmonyPatch(typeof(Log), nameof(Log.Error))]
-    public static class Log_Error_Patch
-    {
-        public static void Prefix(ref string text, out bool __state)
-        {
-            __state = false;
-            try
-            {
-                var enriched = ErrorCaptureHook.TryEnrichErrorText(text);
-                if (enriched != null)
-                {
-                    text = enriched;
-                    __state = true;
-                }
-            }
-            catch { }
-        }
-
-        public static void Postfix(string text, bool __state)
-        {
-            try { ErrorCaptureHook.OnErrorCaptured(text, null, __state); }
-            catch { }
-        }
-    }
-
-    /// <summary>
-    /// 带异常的错误捕获
-    /// </summary>
-    [HarmonyPatch(typeof(Log), "ErrorOnce")]
-    public static class Log_ErrorOnce_Patch
-    {
-        public static void Prefix(ref string text, out bool __state)
-        {
-            __state = false;
-            try
-            {
-                var enriched = ErrorCaptureHook.TryEnrichErrorText(text);
-                if (enriched != null)
-                {
-                    text = enriched;
-                    __state = true;
-                }
-            }
-            catch { }
-        }
-
-        public static void Postfix(string text, bool __state)
-        {
-            try { ErrorCaptureHook.OnErrorCaptured(text, null, __state); }
-            catch { }
-        }
-    }
-
     public static class ErrorCaptureHook
     {
         private static readonly Regex WorkshopIdInPathRegex = new(@"[\\/]content[\\/]\d+[\\/](\d+)(?:[\\/]|$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -88,25 +31,23 @@ namespace BetterModSort.Hooks
 
         private static string EnsureSaveDataFolder()
         {
-            string dir = System.IO.Path.Combine(GenFilePaths.SaveDataFolderPath, "BetterModSort");
-            if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
+            string dir = Path.Combine(GenFilePaths.SaveDataFolderPath, "BetterModSort");
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
             return dir;
         }
 
-        public static string ErrorLogFilePath => System.IO.Path.Combine(EnsureSaveDataFolder(), "BetterModSort.Error.txt");
-        public static string PrevErrorLogFilePath => System.IO.Path.Combine(EnsureSaveDataFolder(), "BetterModSort.Error.Prev.txt");
+        public static string ErrorLogFilePath => Path.Combine(EnsureSaveDataFolder(), "BetterModSort.Error.txt");
+        public static string PrevErrorLogFilePath => Path.Combine(EnsureSaveDataFolder(), "BetterModSort.Error.Prev.txt");
 
         static ErrorCaptureHook()
         {
             try
             {
-                if (System.IO.File.Exists(ErrorLogFilePath))
+                if (File.Exists(ErrorLogFilePath))
                 {
-                    if (System.IO.File.Exists(PrevErrorLogFilePath))
-                    {
-                        System.IO.File.Delete(PrevErrorLogFilePath);
-                    }
-                    System.IO.File.Move(ErrorLogFilePath, PrevErrorLogFilePath);
+                    if (File.Exists(PrevErrorLogFilePath))
+                        File.Delete(PrevErrorLogFilePath);
+                    File.Move(ErrorLogFilePath, PrevErrorLogFilePath);
                 }
             }
             catch (Exception ex)
@@ -163,9 +104,7 @@ namespace BetterModSort.Hooks
                 mod = TryFindModBySteamWorkshopId(workshopId.Value);
 
             if (absFilePath != null)
-            {
                 mod ??= TryFindModByPath(absFilePath);
-            }
 
             var extraInfo = new StringBuilder();
             extraInfo.Append("  -> [TextureSource] ");
@@ -574,7 +513,7 @@ namespace BetterModSort.Hooks
             try
             {
                 string textToWrite;
-                if (isEnriched)
+                if (isEnriched || capturedInfo.RelatedMods == null || capturedInfo.RelatedMods.Count == 0)
                     textToWrite = $"[{capturedInfo.CapturedTime:yyyy-MM-dd HH:mm:ss}]\n{capturedInfo.ErrorMessage}\n\n";
                 else
                     textToWrite = GenerateAnalysisOutput(capturedInfo) + "\n" + "BMS_Error_RawStackHeader".TranslateSafe() + "\n" + capturedInfo.ErrorMessage + "\n\n";
@@ -583,7 +522,7 @@ namespace BetterModSort.Hooks
             catch { }
 
             // 已被路由处理的错误不需要独立输出分析
-            if (EnableDebugOutput && !isEnriched)
+            if (EnableDebugOutput && !isEnriched && capturedInfo.RelatedMods != null && capturedInfo.RelatedMods.Count > 0)
                 OutputErrorAnalysis(capturedInfo);
         }
 

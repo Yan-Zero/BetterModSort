@@ -11,7 +11,7 @@
   <BMS_Settings_EnableAISortingDesc>开启后，点击「自动排序」将调用大模型生成软约束，再由原版拓扑排序引擎执行。关闭时使用原版排序。</BMS_Settings_EnableAISortingDesc>
   <BMS_Settings_SectionDebug>── 调试选项 ──</BMS_Settings_SectionDebug>
   <BMS_Settings_EnableDebugDump>启用 Debug Dump（将 LLM 请求和响应写入文件）</BMS_Settings_EnableDebugDump>
-  <BMS_Settings_EnableDebugDumpDesc>开启后，每次 LLM 通信的完整 Prompt 和 Response 都会被写入 SaveData/BetterModSort/ 目录下的文件。</BMS_Settings_EnableDebugDumpDesc>
+  <BMS_Settings_EnableDebugDumpDesc>开启后，每次 LLM 通信的完整 Prompt 和 Response 都会被写入 %LOCALAPPDATA%Low/Ludeon Studios/RimWorld by Ludeon Studios/BetterModSort/ 目录下的文件。</BMS_Settings_EnableDebugDumpDesc>
 
   <!-- ========== AI Loading Dialog ========== -->
   <BMS_AILoading_AnalyzingDesc>正在提炼 {0} 的性质简述...</BMS_AILoading_AnalyzingDesc>

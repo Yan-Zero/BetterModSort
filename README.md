@@ -1,0 +1,153 @@
+# Better Mod Sort (And Error Inspector)
+
+<p align="center">
+  <img src="Assets/About/preview.png" alt="Better Mod Sort" width="600"/>
+</p>
+
+<p align="center">
+  RimWorld 1.6 · 前置 MOD: <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077">Harmony</a>
+  ·
+  <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3673408015">Steam 创意工坊页面</a>
+</p>
+
+---
+
+## 这 MOD 干嘛的
+
+装了一堆 MOD，不知道怎么排加载顺序？这个 MOD 可以接入大语言模型（LLM），让 AI 根据你的 MOD 列表和实际报错情况，帮你建议一个更合理的加载顺序。
+
+为了让 AI 知道哪些 MOD 之间可能有冲突，MOD 会在后台自动拦截游戏运行时的报错，分析出是哪个 MOD 引起的，记录下来作为 AI 排序的参考依据。所以一般的用法是：**先正常玩一局（或者至少加载一次游戏），让 MOD 收集到足够的报错信息，然后再用 AI 排序**，效果会比较好。
+
+当然，报错分析本身也有用，就算你不用 AI 排序，它也能帮你看清楚红字到底是谁的锅。
+
+---
+
+## 功能
+
+### AI 辅助排序（实验性）
+
+这是这个 MOD 的主要功能，默认关闭，需要在 MOD 设置里手动开启，并配好 LLM 的 API Key。
+
+开启后，MOD 列表里的「自动排序」按钮会走 AI 流程：
+
+1. 先对每个激活的 MOD 调一次 LLM，把描述提炼成短描述（会缓存到本地，不会每次都调）
+2. 把所有 MOD 的信息，连同之前游戏过程中收集到的报错嫌疑 MOD 列表，一起发给 LLM
+3. LLM 返回 `loadBefore` / `loadAfter` 形式的排序建议
+4. 把这些建议注入原版的拓扑排序引擎，执行排序
+
+所以要想 AI 排得准，最好先带着当前的 MOD 列表跑一次游戏，让报错分析系统积累一些数据。第一次用、什么报错数据都没有的时候也能排，只是 AI 能参考的信息会少一些。
+
+注意 AI 排序会消耗 API Token，MOD 多的话消耗不小。
+
+### 报错来源分析
+
+这个功能装上就自动生效，不需要额外操作。它既是给 AI 排序提供数据的，也可以单独当排错工具用。
+
+当游戏出现红色报错时，MOD 会从这几个方向去分析：
+
+- **DLL 堆栈追踪** — 从异常的调用栈里提取每一帧对应的程序集，反查是哪个 MOD 的 DLL
+- **XML Def 来源** — 加载过程中记录每个 Def 是从哪个文件来的，报错时直接定位
+- **Patch xpath 映射** — 在 Patch 应用前把所有 `PatchOperationPathed` 的 xpath 收集起来，关联到对应的 MOD
+- **交叉引用分析** — 解析 `Could not resolve cross-reference` 这类错误里涉及的 defName
+- **材质/贴图路径** — 从 `Cannot load texture` 之类的错误里提取路径，匹配到 MOD 目录
+- **XML 继承链** — 沿 `ParentName` 一层层往上找，定位冲突可能出在哪一层
+- **Steam 创意工坊 ID** — 从文件路径里提取 Workshop ID 来匹配 MOD
+
+分析结果会保存到存档目录下的 `BetterModSort.Error.txt`，上次的会备份为 `BetterModSort.Error.prev.txt`。同时也会在游戏控制台（按 `~` 打开）里输出格式化的报告，大概长这样：
+
+```text
+Could not resolve cross-reference to Verse.WorkTypeDef named DoctorRescue (wanter=workTypes)
+  -> [交叉引用被使用: DoctorRescue]
+     - [Mod: Project RimFactory - Drones (spdskatr.projectrimfactory.drones)] Defs/ThingDef[defName=WarDroneStation]/modExtensions/li/workTypes
+       File: D:\SteamLibrary\steamapps\workshop\content\294100\2037491557\Defs\ThingDefs_Buildings\Buildings_DroneStation.xml
+  -> [Patch 可能涉及: WarDroneStation]
+     - [Mod: Project RimFactory - Drones (spdskatr.projectrimfactory.drones)] PatchOperationAdd (FindMod: Achtung!)
+```
+
+```text
+[BetterModSort] ========== 错误分析 ==========
+时间: 10:10:20
+错误: Trying to get stat MeleeDamageAverage from TM_GloryMaul which has no support for Combat Extended.
+涉及的 MOD (3):
+  - [ceteam.combatextended] Combat Extended
+    DLL: CombatExtended
+    位置: CombatExtended.StatWorker_MeleeDamageAverage.GetValueUnfinalized
+  - [andromeda.nicebilltab] Nice Bill Tab
+    DLL: NiceBillTab
+    位置: NiceBillTab.StatRequestWorker.GetDPS
+  - [ilyvion.loadingprogress] Loading Progress
+    DLL: ilyvion.LoadingProgress
+    位置: ilyvion.LoadingProgress.StaticConstructorOnStartupUtilityReplacement+d__2.MoveNext
+=====================================
+```
+
+---
+
+## 安装
+
+### Steam 创意工坊
+
+1. 订阅 [Better Mod Sort](https://steamcommunity.com/sharedfiles/filedetails/?id=3673408015)
+2. 确保也订阅了 [Harmony](https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077)
+3. 在 MOD 列表中激活，Harmony 排在前面
+
+### 手动安装
+
+1. 下载 Release 或 clone 本仓库
+2. 将 `Assets` 文件夹内容复制到 `Mods/BetterModSort/`
+3. 编译项目，把生成的 DLL 放到 `Assemblies/` 目录下
+
+---
+
+## 设置
+
+在游戏里点 **选项 → MOD 设置 → Better Mod Sort** 打开。
+
+### AI 连接配置
+
+- **LLM API Key** — 你的 API 密钥，留空则 AI 功能不可用
+- **LLM Base URL** — API 地址，默认是 `https://api.openai.com/v1/chat/completions`。用 DeepSeek、Ollama 之类的兼容服务改成对应地址就行
+- **LLM Model Name** — 模型名，默认 `gpt-4o`
+
+### 实验性功能
+
+- **启用 AI 辅助排序** — 勾上之后「自动排序」按钮会走 AI 流程，默认关闭
+
+### 调试选项
+
+- **启用 Debug Dump** — 把每次 LLM 通信的完整请求和响应写到文件里，方便排查问题。文件在 `%LOCALAPPDATA%Low/Ludeon Studios/RimWorld by Ludeon Studios/BetterModSort/` 下面
+
+---
+
+## 多语言
+
+目前支持英语、简体中文和俄语。
+
+翻译文件在 `Assets/Languages/<语言>/Keyed/BetterModSort.xml`，欢迎提 PR 补充其他语言。
+
+---
+
+## 项目结构
+
+```txt
+BetterModSort/
+├── Assets/
+│   ├── About/                 # MOD 元信息、预览图
+│   └── Languages/             # 翻译文件
+├── AI/
+│   ├── Dialog_AILoading.cs    # AI 排序进度弹窗
+│   ├── LLMClient.cs           # OpenAI 兼容的 HTTP 客户端
+│   ├── MetaDataManager.cs     # 嫌疑 MOD 名单 & 短描述缓存的持久化
+│   └── PromptBuilder.cs       # 构建各类 Prompt
+├── Hooks/
+│   ├── ErrorCaptureHook.cs    # 错误捕获与来源分析（核心逻辑）
+│   ├── LogPatch.cs            # Hook Log.Error / ErrorOnce
+│   ├── ModsConfigPatch.cs     # 替换自动排序 & 重复 MOD 检测
+│   └── XmlSource.cs           # Def/Patch 来源追踪
+├── Tools/
+│   ├── DefSearchTool.cs       # Def 搜索
+│   ├── DllLookupTool.cs       # DLL ↔ MOD 映射
+│   └── I18n.cs                # 早期多语言加载（Harmony 初始化时游戏语言系统还没好）
+├── BetterModSortMod.cs        # MOD 入口
+└── BetterModSortSettings.cs   # 设置定义
+```

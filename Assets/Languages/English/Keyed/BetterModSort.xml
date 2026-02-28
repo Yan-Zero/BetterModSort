@@ -11,7 +11,7 @@
   <BMS_Settings_EnableAISortingDesc>When enabled, clicking "Auto-sort" will call an LLM to generate soft constraints, then use vanilla topological sort. When disabled, vanilla sorting is used.</BMS_Settings_EnableAISortingDesc>
   <BMS_Settings_SectionDebug>── Debug Options ──</BMS_Settings_SectionDebug>
   <BMS_Settings_EnableDebugDump>Enable Debug Dump (write LLM request/response to files)</BMS_Settings_EnableDebugDump>
-  <BMS_Settings_EnableDebugDumpDesc>When enabled, full Prompt and Response of each LLM call will be written to files under SaveData/BetterModSort/.</BMS_Settings_EnableDebugDumpDesc>
+  <BMS_Settings_EnableDebugDumpDesc>When enabled, full Prompt and Response of each LLM call will be written to files under %LOCALAPPDATA%Low/Ludeon Studios/RimWorld by Ludeon Studios/BetterModSort/.</BMS_Settings_EnableDebugDumpDesc>
 
   <!-- ========== AI Loading Dialog ========== -->
   <BMS_AILoading_AnalyzingDesc>Analyzing and extracting short summary for {0}...</BMS_AILoading_AnalyzingDesc>

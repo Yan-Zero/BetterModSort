@@ -11,7 +11,7 @@
   <BMS_Settings_EnableAISortingDesc>Если включено, нажатие кнопки «Автосортировка» вызовет LLM для генерации мягких ограничений, а затем будет использована ванильная топологическая сортировка. Если выключено, используется стандартная сортировка.</BMS_Settings_EnableAISortingDesc>
   <BMS_Settings_SectionDebug>── Опции отладки ──</BMS_Settings_SectionDebug>
   <BMS_Settings_EnableDebugDump>Включить дамп отладки (запись запросов/ответов LLM в файлы)</BMS_Settings_EnableDebugDump>
-  <BMS_Settings_EnableDebugDumpDesc>Если включено, полный текст запроса (Prompt) и ответа каждого вызова LLM будет записываться в файлы в директории SaveData/BetterModSort/.</BMS_Settings_EnableDebugDumpDesc>
+  <BMS_Settings_EnableDebugDumpDesc>Если включено, полный текст запроса (Prompt) и ответа каждого вызова LLM будет записываться в файлы в директории %LOCALAPPDATA%Low/Ludeon Studios/RimWorld by Ludeon Studios/BetterModSort/.</BMS_Settings_EnableDebugDumpDesc>
 
   <!-- ========== AI Loading Dialog ========== -->
   <BMS_AILoading_AnalyzingDesc>Анализ и извлечение краткого описания для {0}...</BMS_AILoading_AnalyzingDesc>
