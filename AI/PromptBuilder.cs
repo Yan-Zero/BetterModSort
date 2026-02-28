@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Verse;
 using BetterModSort.Hooks;
+using BetterModSort.Core.ErrorAnalysis;
 
 namespace BetterModSort.AI
 {

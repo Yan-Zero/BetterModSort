@@ -30,14 +30,14 @@
 
 开启后，MOD 列表里的「自动排序」按钮会走 AI 流程：
 
-1. 先对每个激活的 MOD 调一次 LLM，把描述提炼成短描述（会缓存到本地，不会每次都调）
-2. 把所有 MOD 的信息，连同之前游戏过程中收集到的报错嫌疑 MOD 列表，一起发给 LLM
-3. LLM 返回 `loadBefore` / `loadAfter` 形式的排序建议
-4. 把这些建议注入原版的拓扑排序引擎，执行排序
+1. **收集基础结构** — 为了节省 Token，引擎不会发送所有 MOD 的详细介绍，只收集所有激活 MOD 的名称和原版加载要求（如 `loadBefore` / `loadAfter` 等依赖关系）。
+2. **提炼嫌疑 MOD 描述** — 只有曾在游戏中引发过报错的「嫌疑 MOD」，才会调用 LLM 将其描述浓缩为短描述（结果会缓存到本地，下次不必重复提炼）。
+3. **生成软约束** — 将上述精简后的 MOD 信息和历史报错记录一并提交给 LLM，请求生成 `loadBefore` / `loadAfter` 形式的排序建议
+4. **拓扑排序** — 将 AI 返回的软约束注入原版排序引擎，执行拓扑排序
 
 所以要想 AI 排得准，最好先带着当前的 MOD 列表跑一次游戏，让报错分析系统积累一些数据。第一次用、什么报错数据都没有的时候也能排，只是 AI 能参考的信息会少一些。
 
-注意 AI 排序会消耗 API Token，MOD 多的话消耗不小。
+注意 AI 排序会消耗 API Token，400 个 MOD 的情况下，Input 大约消耗 2 万 Token。
 
 ### 报错来源分析
 
@@ -139,15 +139,17 @@ BetterModSort/
 │   ├── LLMClient.cs           # OpenAI 兼容的 HTTP 客户端
 │   ├── MetaDataManager.cs     # 嫌疑 MOD 名单 & 短描述缓存的持久化
 │   └── PromptBuilder.cs       # 构建各类 Prompt
+├── Core/
+│   └── ErrorAnalysis/         # 错误分析核心与丰富化策略库 (各种 Enricher)
 ├── Hooks/
-│   ├── ErrorCaptureHook.cs    # 错误捕获与来源分析（核心逻辑）
+│   ├── ErrorCaptureHook.cs    # 错误发生时的拦截入口
 │   ├── LogPatch.cs            # Hook Log.Error / ErrorOnce
 │   ├── ModsConfigPatch.cs     # 替换自动排序 & 重复 MOD 检测
-│   └── XmlSource.cs           # Def/Patch 来源追踪
+│   └── XmlSource.cs           # Hook 游戏资源加载以建立追踪
 ├── Tools/
-│   ├── DefSearchTool.cs       # Def 搜索
 │   ├── DllLookupTool.cs       # DLL ↔ MOD 映射
-│   └── I18n.cs                # 早期多语言加载（Harmony 初始化时游戏语言系统还没好）
+│   ├── I18n.cs                # 早期多语言加载（Harmony 初始化时游戏语言系统还没好）
+│   └── XmlSourceMap.cs        # Def/Patch 的来源追踪储存字典 (从原 XmlSource 剥离)
 ├── BetterModSortMod.cs        # MOD 入口
 └── BetterModSortSettings.cs   # 设置定义
 ```

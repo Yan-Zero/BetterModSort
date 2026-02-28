@@ -1,6 +1,6 @@
 ﻿using BetterModSort.Tools;
 
-namespace BetterModSort.Hooks
+namespace BetterModSort.Core.ErrorAnalysis
 {
     public class CapturedErrorInfo
     {

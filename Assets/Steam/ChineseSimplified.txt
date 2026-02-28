@@ -1,0 +1,75 @@
+[h1]这 MOD 干嘛的？[/h1]
+
+装了一堆 MOD，不知道怎么排加载顺序？
+
+这个 MOD 可以接入大语言模型（LLM），让 AI 根据你的 MOD 列表和实际报错情况，帮你建议一个更合理的加载顺序。
+
+为了让 AI 知道哪些 MOD 之间可能有冲突，MOD 会在后台自动拦截游戏运行时的报错，分析出是哪个 MOD 引起的，记录下来作为 AI 排序的参考依据。
+
+所以一般的用法是：[b]先正常玩一局（或者至少加载一次游戏）[/b]，让 MOD 收集到足够的报错信息，然后再用 AI 排序，效果会比较好。
+
+当然，报错分析本身也有用，就算你不用 AI 排序，它也能帮你看清楚红字到底是谁的锅。
+
+[hr][/hr]
+
+[h1]功能[/h1]
+
+[b]AI 辅助排序（实验性）[/b]
+
+这是这个 MOD 的主要功能，默认关闭，需要在 MOD 设置里手动开启，并配好 LLM 的 API Key。
+开启后，MOD 列表里的「自动排序」按钮会走 AI 流程：
+
+
+1. 为了节省 Token，引擎不会发送所有 MOD 的详细介绍，只收集所有激活 MOD 的名称和原版加载要求（如 `loadBefore` / `loadAfter` 等依赖关系）。
+2. 只有曾在游戏中引发过报错的「嫌疑 MOD」，才会被单独提取描述，并调用 LLM 浓缩为短描述（会缓存到本地，不会每次都调）。
+3. 把上述精简过的 MOD 信息，连同之前收集到的报错记录，一起发给 LLM。
+4. LLM 返回排序建议，注入原版的拓扑排序引擎，执行排序
+
+
+所以要想 AI 排得准，最好先带着当前的 MOD 列表跑一次游戏，让报错分析系统积累一些数据。
+第一次用、什么报错数据都没有的时候也能排，只是 AI 能参考的信息会少一些。
+
+[b]！注意 AI 排序会消耗 API Token，400 个 MOD 的情况下，输入是大约消耗 2 万 Token！[/b]
+
+[b]报错来源分析[/b]
+
+这个功能装上就自动生效，不需要额外操作。它既是给 AI 排序提供数据的，也可以单独当排错工具用。
+
+分析结果会保存到存档目录下的 `BetterModSort.Error.txt`，上次的会备份为 `BetterModSort.Error.prev.txt`。同时也会在游戏控制台（按 `~` 打开）里输出格式化的报告，大概长这样：
+
+（XML 相关）
+```
+Could not resolve cross-reference to Verse.WorkTypeDef named DoctorRescue (wanter=workTypes)
+  -> [交叉引用被使用: DoctorRescue]
+     - [Mod: Project RimFactory - Drones (spdskatr.projectrimfactory.drones)] Defs/ThingDef[defName=WarDroneStation]/modExtensions/li/workTypes
+       File: D:\SteamLibrary\steamapps\workshop\content\294100\2037491557\Defs\ThingDefs_Buildings\Buildings_DroneStation.xml
+  -> [Patch 可能涉及: WarDroneStation]
+     - [Mod: Project RimFactory - Drones (spdskatr.projectrimfactory.drones)] PatchOperationAdd (FindMod: Achtung!)
+```
+
+（DLL 相关）
+```
+[BetterModSort] ========== 错误分析 ==========
+时间: 10:10:20
+错误: Trying to get stat MeleeDamageAverage from TM_GloryMaul which has no support for Combat Extended.
+涉及的 MOD (3):
+  - [ceteam.combatextended] Combat Extended
+    DLL: CombatExtended
+    位置: CombatExtended.StatWorker_MeleeDamageAverage.GetValueUnfinalized
+  - [andromeda.nicebilltab] Nice Bill Tab
+    DLL: NiceBillTab
+    位置: NiceBillTab.StatRequestWorker.GetDPS
+  - [ilyvion.loadingprogress] Loading Progress
+    DLL: ilyvion.LoadingProgress
+    位置: ilyvion.LoadingProgress.StaticConstructorOnStartupUtilityReplacement+d__2.MoveNext
+=====================================
+```
+
+[hr][/hr]
+
+[b]多语言支持[/b]
+支持英语、简体中文和俄语。
+感谢 [url=https://steamcommunity.com/profiles/76561199060925579]Dmitry6[/url] 提供的俄语翻译！
+欢迎大家贡献其他语言的翻译。
+
+Github 仓库: https://github.com/Yan-Zero/BetterModSort

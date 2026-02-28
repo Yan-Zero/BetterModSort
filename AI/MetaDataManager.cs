@@ -37,7 +37,7 @@ namespace BetterModSort.AI
 
         /// <summary>本次进程内已经写入过 meta 文件的 PackageId 集合（避免重复追加）</summary>
         private static readonly HashSet<string> _appendedPackageIds =
-            new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>本次启动计算出的 LoadOrder Hash，初始化后缓存，避免每次重算</summary>
         private static string? _currentSessionHash;
@@ -117,10 +117,6 @@ namespace BetterModSort.AI
 
         /// <summary>
         /// 尝试从当前或 prev meta 文件中恢复上次会话的嫌疑 PackageId 列表。
-        /// 规则：
-        ///   1. 如果当前文件 Hash 与当前会话 Hash 一致，直接读当前文件。
-        ///   2. 否则检查 .prev 文件的 Hash，一致则读 .prev。
-        ///   3. 两者都不匹配则返回空集合。
         /// </summary>
         public static IReadOnlyCollection<string> GetSuspectPackageIds()
         {

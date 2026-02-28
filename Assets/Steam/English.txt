@@ -1,0 +1,73 @@
+[h1]What does this mod do?[/h1]
+
+Installed a bunch of mods but don't know how to order them?
+
+This mod can connect to Large Language Models (LLMs) and let AI suggest a more reasonable load order based on your mod list and actual error reports.
+
+To let the AI know which mods might have conflicts, this mod will automatically intercept runtime errors in the background, analyze which mod caused them, and record this information as reference data for the AI sorting.
+
+Therefore, the typical workflow is: [b]Play a game normally first (or at least load a game once)[/b] to let the mod collect enough error information, and then use the AI sorting. This will yield better results.
+
+Of course, the error analysis feature itself is also useful. Even if you don't use AI sorting, it can help you figure out exactly whose fault the red text is.
+
+[hr][/hr]
+
+[h1]Features[/h1]
+
+[b]AI-Assisted Sorting (Experimental)[/b]
+
+This is the main feature of the mod. It is disabled by default and needs to be manually enabled in the mod settings, along with configuring the LLM API Key.
+Once enabled, the "Auto-sort" button in the mod list will trigger the AI process:
+
+1. To save Tokens, the engine will not send detailed descriptions of all your mods. It only gathers basic info (Name and vanilla load requirements like `loadBefore` / `loadAfter`).
+2. Only for "suspect mods" that were previously recorded in errors, the AI will extract their full descriptions and compress them into short summaries (these are cached locally).
+3. Send this optimized info, along with the error records, to the LLM.
+4. The LLM returns sorting suggestions, which are then injected into the vanilla topological sorting engine to execute the sort.
+
+So, for the AI to sort accurately, it's best to run the game once with your current mod list to let the error analysis system accumulate some data.
+It can still sort the first time you use it when there is no error data at all, but the AI will have less information to reference.
+
+[b]! Note: AI sorting consumes API Tokens. For a list of 400 mods, the Input will consume roughly 20,000 Tokens ![/b]
+
+[b]Error Source Analysis[/b]
+
+This feature takes effect automatically once installed, requiring no extra actions. It provides data for AI sorting and can also be used independently as a troubleshooting tool.
+
+The analysis results will be saved to `BetterModSort.Error.txt` in your save directory, and the previous results will be backed up as `BetterModSort.Error.prev.txt`. Formatted reports will also be output in the in-game console (open by pressing `~`), looking something like this:
+
+(XML related)
+```
+Could not resolve cross-reference to Verse.WorkTypeDef named DoctorRescue (wanter=workTypes)
+  -> [Cross-ref used in: DoctorRescue]
+     - [Mod: Project RimFactory - Drones (spdskatr.projectrimfactory.drones)] Defs/ThingDef[defName=WarDroneStation]/modExtensions/li/workTypes
+       File: D:\SteamLibrary\steamapps\workshop\content\294100\2037491557\Defs\ThingDefs_Buildings\Buildings_DroneStation.xml
+  -> [Patch might be involved: WarDroneStation]
+     - [Mod: Project RimFactory - Drones (spdskatr.projectrimfactory.drones)] PatchOperationAdd (FindMod: Achtung!)
+```
+
+(DLL related)
+```
+[BetterModSort] ========== Error Analysis ==========
+Time: 10:10:20
+Error: Trying to get stat MeleeDamageAverage from TM_GloryMaul which has no support for Combat Extended.
+Related MODs (3):
+  - [ceteam.combatextended] Combat Extended
+    DLL: CombatExtended
+    Location: CombatExtended.StatWorker_MeleeDamageAverage.GetValueUnfinalized
+  - [andromeda.nicebilltab] Nice Bill Tab
+    DLL: NiceBillTab
+    Location: NiceBillTab.StatRequestWorker.GetDPS
+  - [ilyvion.loadingprogress] Loading Progress
+    DLL: ilyvion.LoadingProgress
+    Location: ilyvion.LoadingProgress.StaticConstructorOnStartupUtilityReplacement+d__2.MoveNext
+=====================================
+```
+
+[hr][/hr]
+
+[b]Language Support[/b]
+Supports English, Simplified Chinese, and Russian.
+Thanks to [url=https://steamcommunity.com/profiles/76561199060925579]Dmitry6[/url] for the Russian translation!
+Translation contributions for other languages are always welcome.
+
+Github Repo: https://github.com/Yan-Zero/BetterModSort

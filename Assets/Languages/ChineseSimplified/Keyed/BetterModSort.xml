@@ -44,6 +44,7 @@
   <BMS_Error_PatchInvolving>Patch 可能涉及</BMS_Error_PatchInvolving>
   <BMS_Error_InheritanceChain>XML 继承链 (ParentName)</BMS_Error_InheritanceChain>
   <BMS_Error_SourceNotFound>在 DefSourceMap 中未找到来源</BMS_Error_SourceNotFound>
+  <BMS_Error_CENotSupported>CE 未兼容项: {0} (来源 Mod: {1} [{2}])</BMS_Error_CENotSupported>
 
   <!-- ========== Patch: Duplicate Mod Warning ========== -->
   <BMS_Patch_DuplicateHeader>========== 检测到重复的 PackageId ==========</BMS_Patch_DuplicateHeader>

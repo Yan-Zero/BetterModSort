@@ -44,6 +44,7 @@
   <BMS_Error_PatchInvolving>Возможно участие патча</BMS_Error_PatchInvolving>
   <BMS_Error_InheritanceChain>Цепочка наследования XML (ParentName)</BMS_Error_InheritanceChain>
   <BMS_Error_SourceNotFound>Источник не найден в DefSourceMap</BMS_Error_SourceNotFound>
+  <BMS_Error_CENotSupported>Несовместимо с CE: {0} (Исходный МОД: {1} [{2}])</BMS_Error_CENotSupported>
 
   <!-- ========== Patch: Duplicate Mod Warning ========== -->
   <BMS_Patch_DuplicateHeader>========== Обнаружен дубликат PackageId ==========</BMS_Patch_DuplicateHeader>

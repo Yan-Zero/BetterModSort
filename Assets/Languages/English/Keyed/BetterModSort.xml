@@ -44,6 +44,7 @@
   <BMS_Error_PatchInvolving>Patch may be involved</BMS_Error_PatchInvolving>
   <BMS_Error_InheritanceChain>XML Inheritance Chain (ParentName)</BMS_Error_InheritanceChain>
   <BMS_Error_SourceNotFound>Source not found in DefSourceMap</BMS_Error_SourceNotFound>
+  <BMS_Error_CENotSupported>CE Incompatible: {0} (Source Mod: {1} [{2}])</BMS_Error_CENotSupported>
 
   <!-- ========== Patch: Duplicate Mod Warning ========== -->
   <BMS_Patch_DuplicateHeader>========== Duplicate PackageId Detected ==========</BMS_Patch_DuplicateHeader>

@@ -4,6 +4,8 @@ using UnityEngine;
 using Verse;
 using BetterModSort.AI;
 using BetterModSort.Tools;
+using BetterModSort.Hooks;
+using BetterModSort.Core.ErrorAnalysis.Enrichers;
 
 namespace BetterModSort
 {
@@ -24,6 +26,13 @@ namespace BetterModSort
 
             // 初始化 MetaDataManager：计算当前 LoadOrder Hash，备份或沿用上次会话的嫌疑 MOD 列表
             AI.MetaDataManager.InitializeCurrentSession();
+
+            // 动态挂载特殊的报错强化器，仅当存在目标 MOD 时开启正则校验以节约性能
+            if (ModLister.GetActiveModWithIdentifier("ceteam.combatextended", true) != null)
+            {
+                ErrorCaptureHook.RegisterEnricher(new CombatExtendedErrorEnricher());
+                Log.Message("[BetterModSort] Loaded specialized error enricher for Combat Extended.");
+            }
 
             Log.Message("[BetterModSort] " + "BMS_Log_HarmonyPatchesApplied".TranslateSafe());
         }
