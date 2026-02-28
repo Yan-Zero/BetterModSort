@@ -218,7 +218,7 @@ namespace BetterModSort.AI
             uint hash = 2166136261u;
             foreach (char c in text)
             {
-                hash ^= (uint)c;
+                hash ^= c;
                 hash *= 16777619u;
             }
             return hash.ToString("x8");

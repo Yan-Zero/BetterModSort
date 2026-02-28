@@ -11,9 +11,39 @@ namespace BetterModSort.AI
     public class SoftConstraintInfo
     {
         public string? PackageId;
+        
+        [JsonConverter(typeof(SingleOrArrayConverter<string>))]
         public List<string>? LoadBefore;
+        
+        [JsonConverter(typeof(SingleOrArrayConverter<string>))]
         public List<string>? LoadAfter;
+        
+        [JsonConverter(typeof(SingleOrArrayConverter<string>))]
         public List<string>? IncompatibleWith;
+    }
+
+    public class SingleOrArrayConverter<T> : JsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(List<T>);
+        }
+
+        public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.StartArray)
+                return serializer.Deserialize<List<T>>(reader);
+            else
+            {
+                var instance = serializer.Deserialize<T>(reader);
+                return instance != null ? new List<T> { instance } : new List<T>();
+            }
+        }
+
+        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class SoftConstraintResponse
@@ -29,10 +59,13 @@ namespace BetterModSort.AI
         private bool _completed = false;
         private bool _failed = false;
 
+        private bool _isModManagerInvoked = false;
+
         public override Vector2 InitialSize => new Vector2(400f, 150f);
 
-        public Dialog_AILoading()
+        public Dialog_AILoading(bool isModManagerInvoked = false)
         {
+            this._isModManagerInvoked = isModManagerInvoked;
             this.forcePause = true;
             this.absorbInputAroundWindow = true;
             this.closeOnClickedOutside = false;
@@ -165,15 +198,19 @@ namespace BetterModSort.AI
             int startIdx = raw.IndexOf('{');
             int endIdx = raw.LastIndexOf('}');
             if (startIdx >= 0 && endIdx >= startIdx)
-            {
                 return raw.Substring(startIdx, endIdx - startIdx + 1);
-            }
             return raw;
         }
 
         private void ApplyConstraintsAndSort(List<SoftConstraintInfo>? constraints)
         {
             if (constraints == null) return;
+
+            if (_isModManagerInvoked)
+            {
+                ModManagerPatch.ApplyConstraintsToModManagerAndSort(constraints);
+                return;
+            }
 
             var allMods = ModsConfig.ActiveModsInLoadOrder.ToList();
 

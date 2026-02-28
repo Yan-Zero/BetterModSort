@@ -3,9 +3,13 @@
 
   <!-- ========== Settings UI ========== -->
   <BMS_Settings_SectionAI>── AI 连接配置 ──</BMS_Settings_SectionAI>
+  <BMS_Settings_Provider>AI 提供商</BMS_Settings_Provider>
+  <BMS_Provider_OpenAI>OpenAI (或兼容接口)</BMS_Provider_OpenAI>
+  <BMS_Provider_Anthropic>Anthropic Claude</BMS_Provider_Anthropic>
+  <BMS_Provider_Gemini>Google Gemini</BMS_Provider_Gemini>
   <BMS_Settings_LabelApiKey>LLM API Key:</BMS_Settings_LabelApiKey>
-  <BMS_Settings_LabelBaseUrl>LLM Base URL（如果是 OpenAI 兼容，保留至 /chat/completions）:</BMS_Settings_LabelBaseUrl>
-  <BMS_Settings_LabelModelName>LLM Model Name（如 gpt-4o, deepseek-chat）:</BMS_Settings_LabelModelName>
+  <BMS_Settings_LabelBaseUrl>LLM Base URL（留空将使用默认端点。自定义链接请保留后缀至 {0}）:</BMS_Settings_LabelBaseUrl>
+  <BMS_Settings_LabelModelName>LLM Model Name（如 gpt-4o, claude-3-5-sonnet-latest）:</BMS_Settings_LabelModelName>
   <BMS_Settings_SectionExperimental>── 实验性功能 ──</BMS_Settings_SectionExperimental>
   <BMS_Settings_EnableAISorting>启用 AI 辅助排序（实验性，替代原版自动排序按钮）</BMS_Settings_EnableAISorting>
   <BMS_Settings_EnableAISortingDesc>开启后，点击「自动排序」将调用大模型生成软约束，再由原版拓扑排序引擎执行。关闭时使用原版排序。</BMS_Settings_EnableAISortingDesc>
@@ -30,6 +34,7 @@
 
   <!-- ========== LLM Client ========== -->
   <BMS_LLM_ApiKeyMissing>API Key 未配置！请在 MOD 设置中填入您的 LLM API Key。</BMS_LLM_ApiKeyMissing>
+  <BMS_LLM_JSONFallbackRetry>LLM 不支持原本的 json_object 格式返回 (HTTP 400)。正尝试 fallback: 移除格式约束，使用 Prompt 注入重新请求...</BMS_LLM_JSONFallbackRetry>
 
   <!-- ========== Error Capture Hook ========== -->
   <BMS_Error_AnalysisHeader>========== 错误分析 ==========</BMS_Error_AnalysisHeader>

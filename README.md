@@ -39,7 +39,7 @@ Once enabled, the "Auto-sort" button in the mod list will trigger the AI process
 
 So, for the AI to sort accurately, it's best to run the game once with your current mod list so the error analysis system can accumulate some data. It can still sort the first time you use it with no error data, but the AI will have less information to reference.
 
-Note that AI sorting consumes API tokens. For instance, with 400 mods, the input will consume about 20k tokens.
+Note that AI sorting consumes API tokens. For instance, with 400 mods, the input will consume about 10k tokens.
 
 ### Error Source Analysis
 

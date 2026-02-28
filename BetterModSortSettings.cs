@@ -2,8 +2,16 @@
 
 namespace BetterModSort
 {
+    public enum LLMProvider
+    {
+        OpenAI,
+        Anthropic,
+        Gemini
+    }
+
     public class BetterModSortSettings : ModSettings
     {
+        public LLMProvider Provider = LLMProvider.OpenAI;
         public string ApiKey = "";
         public string BaseUrl = "https://api.openai.com/v1/chat/completions";
         public string ModelName = "gpt-4o";
@@ -40,6 +48,7 @@ namespace BetterModSort
 
         public override void ExposeData()
         {
+            Scribe_Values.Look(ref Provider, "Provider", LLMProvider.OpenAI);
             Scribe_Values.Look(ref ApiKey, "ApiKey", "");
             Scribe_Values.Look(ref BaseUrl, "BaseUrl", "https://api.openai.com/v1/chat/completions");
             Scribe_Values.Look(ref ModelName, "ModelName", "gpt-4o");

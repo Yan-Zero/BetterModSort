@@ -96,19 +96,47 @@ namespace BetterModSort.AI
             sb.AppendLine("注意：括号内没有说明的项目即为空。");
             sb.AppendLine();
 
+            HashSet<string> ignoredPrefixes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "ludeon.", "brrainz.harmony" };
+            
             for (int i = 0; i < mods.Count; i++)
             {
                 var mod = mods[i];
                 var details = new List<string>();
 
+                // 是否是被特殊怀疑的 MOD
+                bool isSuspect = suspectShortDescs != null && suspectShortDescs.ContainsKey(mod.PackageId);
+
                 if (mod.Dependencies != null && mod.Dependencies.Any())
-                    details.Add($"Dep: {string.Join(",", mod.Dependencies.Select(d => d.packageId))}");
-                if (mod.LoadBefore != null && mod.LoadBefore.Any())
-                    details.Add($"Before: {string.Join(",", mod.LoadBefore)}");
-                if (mod.LoadAfter != null && mod.LoadAfter.Any())
-                    details.Add($"After: {string.Join(",", mod.LoadAfter)}");
+                {
+                    var filteredDeps = mod.Dependencies.Select(d => d.packageId).Where(id => !ignoredPrefixes.Any(p => id.StartsWith(p, StringComparison.OrdinalIgnoreCase)));
+                    if (filteredDeps.Any())
+                        details.Add($"Dep: {string.Join(",", filteredDeps)}");
+                }
+
+                // 为了节省 Token，如果不是涉事（嫌疑）MOD，尽量不发送原有的 LoadBefore/LoadAfter（因为原版引擎本来就会处理）
+                if (isSuspect)
+                {
+                    if (mod.LoadBefore != null && mod.LoadBefore.Any())
+                    {
+                        // 包含在 Ignore 列表里的，如果是 Before 规则，不应该被忽略（例如：如果他偏要强行声明必须在原版或 Harmony 之前，我们得告诉 AI）
+                        var filteredBefore = mod.LoadBefore; //.Where(id => !ignoredPrefixes.Any(p => id.StartsWith(p, StringComparison.OrdinalIgnoreCase)));
+                        if (filteredBefore.Any())
+                            details.Add($"Before: {string.Join(",", filteredBefore)}");
+                    }
+                    if (mod.LoadAfter != null && mod.LoadAfter.Any())
+                    {
+                        var filteredAfter = mod.LoadAfter.Where(id => !ignoredPrefixes.Any(p => id.StartsWith(p, StringComparison.OrdinalIgnoreCase)));
+                        if (filteredAfter.Any())
+                            details.Add($"After: {string.Join(",", filteredAfter)}");
+                    }
+                }
+
                 if (mod.IncompatibleWith != null && mod.IncompatibleWith.Any())
-                    details.Add($"Incompatible: {string.Join(",", mod.IncompatibleWith)}");
+                {
+                    var filteredIncomp = mod.IncompatibleWith.Where(id => !ignoredPrefixes.Any(p => id.StartsWith(p, StringComparison.OrdinalIgnoreCase)));
+                    if (filteredIncomp.Any())
+                        details.Add($"Incompatible: {string.Join(",", filteredIncomp)}");
+                }
 
                 string suffix = details.Count > 0 ? $" ({string.Join(" | ", details)})" : "";
                 sb.AppendLine($"{i + 1}. [{mod.PackageId}] {mod.Name}{suffix}");

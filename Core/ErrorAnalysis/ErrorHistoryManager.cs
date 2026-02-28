@@ -66,13 +66,13 @@ namespace BetterModSort.Core.ErrorAnalysis
                 string textToWrite;
                 if (capturedInfo.Enrichment != null)
                     // enrichment 数据对象自己决定如何生成精简的文件日志
-                    textToWrite = $"[{capturedInfo.CapturedTime:yyyy-MM-dd HH:mm:ss}]\n{capturedInfo.Enrichment.FormatForFile()}\n\n";
+                    textToWrite = $"{capturedInfo.Enrichment.FormatForFile()}\n\n";
                 else if (capturedInfo.RelatedMods != null && capturedInfo.RelatedMods.Count > 0)
                     // 非 enriched 但有 DLL 堆栈分析结果，生成精简格式
-                    textToWrite = GenerateCompactFileOutput(capturedInfo);
+                    textToWrite = $"{GenerateCompactFileOutput(capturedInfo)}\n";
                 else
                     // 无任何分析结果，直接记录原始文本
-                    textToWrite = $"[{capturedInfo.CapturedTime:yyyy-MM-dd HH:mm:ss}]\n{TruncateString(capturedInfo.ErrorMessage ?? "", 200)}\n\n";
+                    textToWrite = $"{TruncateString(capturedInfo.ErrorMessage ?? "", 200)}\n\n";
                 File.AppendAllText(ErrorLogFilePath, textToWrite);
             }
             catch { }

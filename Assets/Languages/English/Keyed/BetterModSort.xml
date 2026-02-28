@@ -3,9 +3,13 @@
 
   <!-- ========== Settings UI ========== -->
   <BMS_Settings_SectionAI>── AI Connection Config ──</BMS_Settings_SectionAI>
+  <BMS_Settings_Provider>AI Provider</BMS_Settings_Provider>
+  <BMS_Provider_OpenAI>OpenAI (or Compatible)</BMS_Provider_OpenAI>
+  <BMS_Provider_Anthropic>Anthropic Claude</BMS_Provider_Anthropic>
+  <BMS_Provider_Gemini>Google Gemini</BMS_Provider_Gemini>
   <BMS_Settings_LabelApiKey>LLM API Key:</BMS_Settings_LabelApiKey>
-  <BMS_Settings_LabelBaseUrl>LLM Base URL (for OpenAI-compatible APIs, keep up to /chat/completions):</BMS_Settings_LabelBaseUrl>
-  <BMS_Settings_LabelModelName>LLM Model Name (e.g. gpt-4o, deepseek-chat):</BMS_Settings_LabelModelName>
+  <BMS_Settings_LabelBaseUrl>LLM Base URL (keep empty for defaults. Custom URL requires suffix: {0}):</BMS_Settings_LabelBaseUrl>
+  <BMS_Settings_LabelModelName>LLM Model Name (e.g. gpt-4o, claude-3-5-sonnet-latest):</BMS_Settings_LabelModelName>
   <BMS_Settings_SectionExperimental>── Experimental Features ──</BMS_Settings_SectionExperimental>
   <BMS_Settings_EnableAISorting>Enable AI-assisted sorting (Experimental, replaces vanilla auto-sort)</BMS_Settings_EnableAISorting>
   <BMS_Settings_EnableAISortingDesc>When enabled, clicking "Auto-sort" will call an LLM to generate soft constraints, then use vanilla topological sort. When disabled, vanilla sorting is used.</BMS_Settings_EnableAISortingDesc>
@@ -30,6 +34,7 @@
 
   <!-- ========== LLM Client ========== -->
   <BMS_LLM_ApiKeyMissing>API Key not configured! Please enter your LLM API Key in the mod settings.</BMS_LLM_ApiKeyMissing>
+  <BMS_LLM_JSONFallbackRetry>The LLM does not support the original json_object response format (HTTP 400). Attempting fallback: removing format constraints and requesting again using prompt injection...</BMS_LLM_JSONFallbackRetry>
 
   <!-- ========== Error Capture Hook ========== -->
   <BMS_Error_AnalysisHeader>========== Error Analysis ==========</BMS_Error_AnalysisHeader>

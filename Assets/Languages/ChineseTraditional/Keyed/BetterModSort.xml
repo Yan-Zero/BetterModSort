@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+
+  <!-- ========== Settings UI ========== -->
+  <BMS_Settings_SectionAI>── AI 連接配置 ──</BMS_Settings_SectionAI>
+  <BMS_Settings_Provider>AI 提供商</BMS_Settings_Provider>
+  <BMS_Provider_OpenAI>OpenAI (或相容介面)</BMS_Provider_OpenAI>
+  <BMS_Provider_Anthropic>Anthropic Claude</BMS_Provider_Anthropic>
+  <BMS_Provider_Gemini>Google Gemini</BMS_Provider_Gemini>
+  <BMS_Settings_LabelApiKey>LLM API Key:</BMS_Settings_LabelApiKey>
+  <BMS_Settings_LabelBaseUrl>LLM Base URL（留空將使用預設端點。自訂連結請保留後綴至 {0}）:</BMS_Settings_LabelBaseUrl>
+  <BMS_Settings_LabelModelName>LLM Model Name（如 gpt-4o, claude-3-5-sonnet-latest）:</BMS_Settings_LabelModelName>
+  <BMS_Settings_SectionExperimental>── 實驗性功能 ──</BMS_Settings_SectionExperimental>
+  <BMS_Settings_EnableAISorting>啟用 AI 輔助排序（實驗性，替代原版自動排序按鈕）</BMS_Settings_EnableAISorting>
+  <BMS_Settings_EnableAISortingDesc>開啟後，點擊「自動排序」將呼叫大模型產生軟約束，再由原版拓樸排序引擎執行。關閉時使用原版排序。</BMS_Settings_EnableAISortingDesc>
+  <BMS_Settings_LabelErrorLogMaxChars>發送給 AI 的報錯日誌最大字元數</BMS_Settings_LabelErrorLogMaxChars>
+  <BMS_Settings_LabelShortDescMaxChars>提煉短描述時截取原始描述的最大字元數</BMS_Settings_LabelShortDescMaxChars>
+  <BMS_Settings_LabelShortDescBypassThreshold>低於此字數的 MOD 不會呼叫 AI 提煉短描述，直接發送原文</BMS_Settings_LabelShortDescBypassThreshold>
+  <BMS_Settings_SectionDebug>── 偵錯選項 ──</BMS_Settings_SectionDebug>
+  <BMS_Settings_EnableDebugDump>啟用 Debug Dump（將 LLM 關鍵資訊寫入檔案）</BMS_Settings_EnableDebugDump>
+  <BMS_Settings_EnableDebugDumpDesc>開啟後，每次 LLM 通訊的關鍵摘要（模型、Token 用量、回覆內容）會寫入 Dump 子目錄下的檔案。</BMS_Settings_EnableDebugDumpDesc>
+  <BMS_Settings_OpenDumpFolder>打開資料夾</BMS_Settings_OpenDumpFolder>
+  <BMS_Settings_LabelLLMTimeout>LLM 請求超時時間（秒）:</BMS_Settings_LabelLLMTimeout>
+
+  <!-- ========== AI Loading Dialog ========== -->
+  <BMS_AILoading_AnalyzingDesc>正在提煉 {0} 的性質簡述...</BMS_AILoading_AnalyzingDesc>
+  <BMS_AILoading_Requesting>正在向大模型請求推薦排序...</BMS_AILoading_Requesting>
+  <BMS_AILoading_Timeout>請求超時或被取消，請檢查網路連線和 API 位址配置。</BMS_AILoading_Timeout>
+  <BMS_AILoading_FaultedStatus>請求發生底層異常，詳情請按 ~ 查看主控台紅色日誌。</BMS_AILoading_FaultedStatus>
+  <BMS_AILoading_ParseFailed>解析 AI 返回數據失敗，詳情請按 ~ 查看主控台。</BMS_AILoading_ParseFailed>
+  <BMS_AILoading_SortDone>AI 輔助排序完成！</BMS_AILoading_SortDone>
+  <BMS_AILoading_BtnClose>關閉</BMS_AILoading_BtnClose>
+  <BMS_AILoading_Waiting>請耐心等待，大模型正在思考</BMS_AILoading_Waiting>
+
+  <!-- ========== LLM Client ========== -->
+  <BMS_LLM_ApiKeyMissing>API Key 未配置！請在 MOD 設定中填入您的 LLM API Key。</BMS_LLM_ApiKeyMissing>
+  <BMS_LLM_JSONFallbackRetry>LLM 不支持原本的 json_object 格式返回 (HTTP 400)。正嘗試 fallback: 移除格式約束，使用 Prompt 注入重新請求...</BMS_LLM_JSONFallbackRetry>
+
+  <!-- ========== Error Capture Hook ========== -->
+  <BMS_Error_AnalysisHeader>========== 錯誤分析 ==========</BMS_Error_AnalysisHeader>
+  <BMS_Error_Time>時間</BMS_Error_Time>
+  <BMS_Error_ErrorText>錯誤</BMS_Error_ErrorText>
+  <BMS_Error_RelatedMods>涉及的 MOD</BMS_Error_RelatedMods>
+  <BMS_Error_Location>位置</BMS_Error_Location>
+  <BMS_Error_AnalysisFooter>=====================================</BMS_Error_AnalysisFooter>
+  <BMS_Error_RawStackHeader>[原始報錯全文及堆疊]:</BMS_Error_RawStackHeader>
+  <BMS_Error_BackupFailed>無法備份上一次的錯誤檔案</BMS_Error_BackupFailed>
+  <BMS_Error_ModNotMatched>未匹配</BMS_Error_ModNotMatched>
+  <BMS_Error_UnknownOrVanilla>未知或原版</BMS_Error_UnknownOrVanilla>
+  <BMS_Error_UnknownFile>未知檔案</BMS_Error_UnknownFile>
+  <BMS_Error_SourceMod>來源 MOD</BMS_Error_SourceMod>
+  <BMS_Error_File>檔案</BMS_Error_File>
+  <BMS_Error_CrossRefUsedIn>交叉引用被使用</BMS_Error_CrossRefUsedIn>
+  <BMS_Error_PatchInvolving>Patch 可能涉及</BMS_Error_PatchInvolving>
+  <BMS_Error_InheritanceChain>XML 繼承鏈 (ParentName)</BMS_Error_InheritanceChain>
+  <BMS_Error_SourceNotFound>在 DefSourceMap 中未找到來源</BMS_Error_SourceNotFound>
+  <BMS_Error_CENotSupported>CE 未相容項目: {0} (來源 Mod: {1} [{2}])</BMS_Error_CENotSupported>
+
+  <!-- ========== Patch: Duplicate Mod Warning ========== -->
+  <BMS_Patch_DuplicateHeader>========== 檢測到重複的 PackageId ==========</BMS_Patch_DuplicateHeader>
+  <BMS_Patch_DuplicateFound>發現 {0} 個 MOD 使用相同的 PackageId:</BMS_Patch_DuplicateFound>
+  <BMS_Patch_Path>路徑</BMS_Patch_Path>
+  <BMS_Patch_Source>來源</BMS_Patch_Source>
+  <BMS_Patch_DuplicateAdvice>建議: 請移除重複的 MOD，只保留一個版本。</BMS_Patch_DuplicateAdvice>
+  <BMS_Patch_DuplicateFooter>================================================</BMS_Patch_DuplicateFooter>
+  <BMS_Patch_Unknown>未知</BMS_Patch_Unknown>
+
+  <!-- ========== System Logs ========== -->
+  <BMS_Log_EarlyI18nFailed>初始化早期多語言載入器失敗：{0}</BMS_Log_EarlyI18nFailed>
+  <BMS_Log_XmlLoadFailed>載入 XML {0} 失敗：{1}</BMS_Log_XmlLoadFailed>
+  <BMS_Log_PatchXpathCollected>已收集 {0} 個 Patch xpath 映射</BMS_Log_PatchXpathCollected>
+  <BMS_Log_PatchXpathFailed>收集 Patch xpath 失敗: {0}</BMS_Log_PatchXpathFailed>
+  <BMS_Log_XmlTrackerCleared>XML 追蹤資料已清理 (DefSourceMap: {0}, XmlBuckets: {1}, PatchSourceMap: {2})</BMS_Log_XmlTrackerCleared>
+  <BMS_Log_HarmonyPatchesApplied>Harmony patches 已套用。</BMS_Log_HarmonyPatchesApplied>
+  <BMS_Log_MetaDataManagerInitFailed>MetaDataManager 初始化會話失敗: {0}</BMS_Log_MetaDataManagerInitFailed>
+  <BMS_Log_MetaDataManagerAppendFailed>MetaDataManager 追加嫌疑 MOD 失敗: {0}</BMS_Log_MetaDataManagerAppendFailed>
+  <BMS_Log_MetaDataManagerGetSuspectsFailed>MetaDataManager 獲取嫌疑 MOD 失敗: {0}</BMS_Log_MetaDataManagerGetSuspectsFailed>
+  <BMS_Log_MetaDataManagerTryGetDescFailed>MetaDataManager 嘗試獲取短描述 ({0}) 失敗: {1}</BMS_Log_MetaDataManagerTryGetDescFailed>
+  <BMS_Log_MetaDataManagerSaveDescFailed>MetaDataManager 保存短描述 ({0}) 失敗: {1}</BMS_Log_MetaDataManagerSaveDescFailed>
+  <BMS_Log_DebugDumpWriteFailed>Debug Dump 寫入失敗 ({0}): {1}</BMS_Log_DebugDumpWriteFailed>
+  <BMS_Log_AILoadingExtractFailed>無法提煉 {0} 的短描述: {1}</BMS_Log_AILoadingExtractFailed>
+  <BMS_Log_AILoadingException>LLM 請求崩潰拋出底層異常:\n{0}</BMS_Log_AILoadingException>
+  <BMS_Log_AILoadingParseFailed>解析 AI 返回數據失敗: {0}</BMS_Log_AILoadingParseFailed>
+
+</LanguageData>

@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
 using Verse;
@@ -39,6 +41,7 @@ namespace BetterModSort
 
         private static void SyncLLMClientSettings()
         {
+            LLMClient.Provider = Settings.Provider;
             LLMClient.BaseUrl = Settings.BaseUrl;
             LLMClient.ApiKey = Settings.ApiKey;
             LLMClient.ModelName = Settings.ModelName;
@@ -53,10 +56,45 @@ namespace BetterModSort
             listing.Label("BMS_Settings_SectionAI".TranslateSafe());
             listing.GapLine();
 
+            listing.Label("BMS_Settings_Provider".TranslateSafe() + ": " + $"BMS_Provider_{Settings.Provider}".TranslateSafe());
+            if (listing.ButtonText($"BMS_Provider_{Settings.Provider}".TranslateSafe()))
+            {
+                var list = new List<FloatMenuOption>();
+                foreach (LLMProvider provider in Enum.GetValues(typeof(LLMProvider)))
+                {
+                    LLMProvider currentProvider = provider; // captures local copy
+                    list.Add(new FloatMenuOption($"BMS_Provider_{currentProvider}".TranslateSafe(), () =>
+                    {
+                        Settings.Provider = currentProvider;
+                        if (currentProvider == LLMProvider.OpenAI)
+                        {
+                            Settings.BaseUrl = ""; // Default handled in LLMClient
+                            Settings.ModelName = "gpt-4o";
+                        }
+                        else if (currentProvider == LLMProvider.Anthropic)
+                        {
+                            Settings.BaseUrl = "";
+                            Settings.ModelName = "claude-4-6-haiku";
+                        }
+                        else if (currentProvider == LLMProvider.Gemini)
+                        {
+                            Settings.BaseUrl = "";
+                            Settings.ModelName = "gemini-3-flash-preview";
+                        }
+                    }));
+                }
+                Find.WindowStack.Add(new FloatMenu(list));
+            }
+            listing.Gap();
+
             listing.Label("BMS_Settings_LabelApiKey".TranslateSafe());
             Settings.ApiKey = listing.TextEntry(Settings.ApiKey);
             
-            listing.Label("BMS_Settings_LabelBaseUrl".TranslateSafe());
+            string baseUrlHintSuffix = "/chat/completions";
+            if (Settings.Provider == LLMProvider.Anthropic) baseUrlHintSuffix = "/v1/messages";
+            else if (Settings.Provider == LLMProvider.Gemini) baseUrlHintSuffix = "/v1beta/";
+
+            listing.Label("BMS_Settings_LabelBaseUrl".TranslateSafe(baseUrlHintSuffix));
             Settings.BaseUrl = listing.TextEntry(Settings.BaseUrl);
 
             listing.Label("BMS_Settings_LabelModelName".TranslateSafe());

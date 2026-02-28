@@ -3,9 +3,13 @@
 
   <!-- ========== Settings UI ========== -->
   <BMS_Settings_SectionAI>── Конфигурация подключения ИИ ──</BMS_Settings_SectionAI>
+  <BMS_Settings_Provider>Поставщик ИИ (AI Provider)</BMS_Settings_Provider>
+  <BMS_Provider_OpenAI>OpenAI (или совместимый)</BMS_Provider_OpenAI>
+  <BMS_Provider_Anthropic>Anthropic Claude</BMS_Provider_Anthropic>
+  <BMS_Provider_Gemini>Google Gemini</BMS_Provider_Gemini>
   <BMS_Settings_LabelApiKey>Ключ API LLM:</BMS_Settings_LabelApiKey>
-  <BMS_Settings_LabelBaseUrl>Базовый URL LLM (для API, совместимых с OpenAI, до /chat/completions):</BMS_Settings_LabelBaseUrl>
-  <BMS_Settings_LabelModelName>Название модели LLM (например, gpt-4o, deepseek-chat):</BMS_Settings_LabelModelName>
+  <BMS_Settings_LabelBaseUrl>Базовый URL LLM (пусто для умолчаний. Кастомный URL требует суффикс: {0}):</BMS_Settings_LabelBaseUrl>
+  <BMS_Settings_LabelModelName>Название модели LLM (например, gpt-4o, claude-3-5-sonnet-latest):</BMS_Settings_LabelModelName>
   <BMS_Settings_SectionExperimental>── Экспериментальные функции ──</BMS_Settings_SectionExperimental>
   <BMS_Settings_EnableAISorting>Включить сортировку с помощью ИИ (Экспериментально, заменяет ванильную автосортировку)</BMS_Settings_EnableAISorting>
   <BMS_Settings_EnableAISortingDesc>Если включено, нажатие кнопки «Автосортировка» вызовет LLM для генерации мягких ограничений, а затем будет использована ванильная топологическая сортировка. Если выключено, используется стандартная сортировка.</BMS_Settings_EnableAISortingDesc>
@@ -30,6 +34,7 @@
 
   <!-- ========== LLM Client ========== -->
   <BMS_LLM_ApiKeyMissing>Ключ API не настроен! Пожалуйста, введите ваш Ключ API LLM в настройках мода.</BMS_LLM_ApiKeyMissing>
+  <BMS_LLM_JSONFallbackRetry>Модель LLM не поддерживает исходный формат ответа json_object (HTTP 400). Попытка fallback: удаление ограничений формата и повторный запрос с использованием инъекции промпта...</BMS_LLM_JSONFallbackRetry>
 
   <!-- ========== Error Capture Hook ========== -->
   <BMS_Error_AnalysisHeader>========== Анализ ошибки ==========</BMS_Error_AnalysisHeader>
