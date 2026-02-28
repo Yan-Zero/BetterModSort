@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using BetterModSort.Tools;
 using Verse;
 
@@ -64,7 +65,7 @@ namespace BetterModSort.Core.ErrorAnalysis
             {
                 string textToWrite;
                 if (isEnriched || capturedInfo.RelatedMods == null || capturedInfo.RelatedMods.Count == 0)
-                    textToWrite = $"[{capturedInfo.CapturedTime:yyyy-MM-dd HH:mm:ss}]\n{capturedInfo.ErrorMessage}\n\n";
+                    textToWrite = $"[{capturedInfo.CapturedTime:yyyy-MM-dd HH:mm:ss}]\n{TrimEnrichedMessage(capturedInfo.ErrorMessage ?? "")}\n\n";
                 else
                     textToWrite = GenerateAnalysisOutput(capturedInfo) + "\n" + "BMS_Error_RawStackHeader".TranslateSafe() + "\n" + capturedInfo.ErrorMessage + "\n\n";
                 File.AppendAllText(ErrorLogFilePath, textToWrite);
@@ -108,6 +109,56 @@ namespace BetterModSort.Core.ErrorAnalysis
             int len = maxLength;
             if (char.IsHighSurrogate(str[len - 1])) len--;
             return str[..len] + "...";
+        }
+
+        /// <summary>
+        /// 对 enriched 的错误文本做智能瘦身，仅用于写入文件（不影响内存和控制台）。
+        /// 截断 XML Context 块和 Unity 堆栈，保留 enricher 注入的元数据。
+        /// </summary>
+        private static string TrimEnrichedMessage(string message)
+        {
+            if (string.IsNullOrEmpty(message)) return message;
+
+            var lines = message.Split('\n');
+            var sb = new StringBuilder();
+            int stackLineCount = 0;
+
+            foreach (var line in lines)
+            {
+                var trimmed = line.TrimStart();
+
+                // 截断 XML Context: 后的内容（保留前 200 字符）
+                int ctxIdx = line.IndexOf("Context: <", StringComparison.Ordinal);
+                if (ctxIdx >= 0)
+                {
+                    string beforeCtx = line.Substring(0, ctxIdx + "Context: ".Length);
+                    string ctxContent = line.Substring(ctxIdx + "Context: ".Length);
+                    if (ctxContent.Length > 200)
+                        ctxContent = ctxContent.Substring(0, 200) + "...(truncated)";
+                    sb.AppendLine(beforeCtx + ctxContent);
+                    continue;
+                }
+
+                // 限制 Unity/Mono 堆栈行数（以 "at " 开头的行只保留前 3 行）
+                if (trimmed.StartsWith("at ", StringComparison.Ordinal))
+                {
+                    stackLineCount++;
+                    if (stackLineCount > 3)
+                    {
+                        if (stackLineCount == 4)
+                            sb.AppendLine("  ... (stack trace truncated)");
+                        continue;
+                    }
+                }
+                else
+                {
+                    stackLineCount = 0;
+                }
+
+                sb.AppendLine(line);
+            }
+
+            return sb.ToString().TrimEnd();
         }
 
         public static void ClearHistory()

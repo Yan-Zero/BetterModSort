@@ -12,6 +12,7 @@ namespace BetterModSort.AI
         public string? PackageId;
         public List<string>? LoadBefore;
         public List<string>? LoadAfter;
+        public List<string>? IncompatibleWith;
     }
 
     public class SoftConstraintResponse
@@ -160,33 +161,88 @@ namespace BetterModSort.AI
 
             var allMods = ModsConfig.ActiveModsInLoadOrder.ToList();
 
+            // 1. 构建 packageId → index 映射
+            var idToIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < allMods.Count; i++)
+                idToIndex[allMods[i].PackageId] = i;
+
+            // 2. 用邻接表构建当前依赖图（包含原版硬约束）
+            //    边 from → to 表示 from 必须排在 to 前面
+            var adj = new Dictionary<int, HashSet<int>>();
+            for (int i = 0; i < allMods.Count; i++)
+                adj[i] = new HashSet<int>();
+
+            for (int i = 0; i < allMods.Count; i++)
+            {
+                var mod = allMods[i];
+                // LoadBefore: 本 mod 应排在 target 之前 → 边 target → i (target 在 i 后面)
+                foreach (var before in mod.LoadBefore.Concat(mod.ForceLoadBefore))
+                {
+                    if (idToIndex.TryGetValue(before, out int targetIdx))
+                        adj[targetIdx].Add(i);
+                }
+                // LoadAfter: 本 mod 应排在 target 之后 → 边 i → target (i 在 target 后面)
+                foreach (var after in mod.LoadAfter.Concat(mod.ForceLoadAfter))
+                {
+                    if (idToIndex.TryGetValue(after, out int targetIdx))
+                        adj[i].Add(targetIdx);
+                }
+            }
+
+            // 3. 逐条验证 AI 约束，只注入不会产生环的
+            int skipped = 0;
             foreach (var constraint in constraints)
             {
                 if (string.IsNullOrEmpty(constraint.PackageId)) continue;
-                
-                var mod = allMods.FirstOrDefault(m => m.PackageId.Equals(constraint.PackageId, StringComparison.OrdinalIgnoreCase));
-                if (mod != null)
-                {
-                    // 给原版 ForceLoadBefore 和 ForceLoadAfter 添加通过 AI 生成的软约束依赖
-                    if (constraint.LoadBefore != null)
+                if (!idToIndex.TryGetValue(constraint.PackageId!, out int modIdx)) continue;
+                var mod = allMods[modIdx];
+
+                // LoadBefore: 本 mod 应排在 target 之前
+                // 等价于添加边 targetIdx → modIdx（target 在 mod 后面）
+                if (constraint.LoadBefore != null)
+                    foreach (var target in constraint.LoadBefore)
                     {
-                        foreach (var target in constraint.LoadBefore)
+                        if (!idToIndex.TryGetValue(target, out int targetIdx)) continue;
+                        if (adj[targetIdx].Contains(modIdx)) continue; // 已存在
+                        // 如果从 modIdx 可以到达 targetIdx，加边 targetIdx → modIdx 会成环
+                        if (CanReach(adj, modIdx, targetIdx))
                         {
-                            if (!mod.ForceLoadBefore.Contains(target))
-                                mod.ForceLoadBefore.Add(target);
+                            skipped++;
+                            Log.Warning($"[BetterModSort] AI constraint skipped (would create cycle): {constraint.PackageId} loadBefore {target}");
+                            continue;
                         }
+                        adj[targetIdx].Add(modIdx);
+                        if (!mod.ForceLoadBefore.Contains(target))
+                            mod.ForceLoadBefore.Add(target);
                     }
 
-                    if (constraint.LoadAfter != null)
+                // LoadAfter: 本 mod 应排在 target 之后
+                // 等价于添加边 modIdx → targetIdx（mod 在 target 后面）
+                if (constraint.LoadAfter != null)
+                    foreach (var target in constraint.LoadAfter)
                     {
-                        foreach (var target in constraint.LoadAfter)
+                        if (!idToIndex.TryGetValue(target, out int targetIdx)) continue;
+                        if (adj[modIdx].Contains(targetIdx)) continue; // 已存在
+                        // 如果从 targetIdx 可以到达 modIdx，加边 modIdx → targetIdx 会成环
+                        if (CanReach(adj, targetIdx, modIdx))
                         {
-                            if (!mod.ForceLoadAfter.Contains(target))
-                                mod.ForceLoadAfter.Add(target);
+                            skipped++;
+                            Log.Warning($"[BetterModSort] AI constraint skipped (would create cycle): {constraint.PackageId} loadAfter {target}");
+                            continue;
                         }
+                        adj[modIdx].Add(targetIdx);
+                        if (!mod.ForceLoadAfter.Contains(target))
+                            mod.ForceLoadAfter.Add(target);
                     }
-                }
+
+                if (constraint.IncompatibleWith != null)
+                    foreach (var target in constraint.IncompatibleWith)
+                        if (!mod.IncompatibleWith.Contains(target))
+                            mod.IncompatibleWith.Add(target);
             }
+
+            if (skipped > 0)
+                Log.Warning($"[BetterModSort] {skipped} AI constraint(s) were skipped to prevent cyclic dependencies.");
 
             // 标记，让 Prefix 能够放行
             ModsConfig_TrySortMods_Patch.ExecuteVanillaSort = true;
@@ -198,6 +254,28 @@ namespace BetterModSort.AI
             {
                 ModsConfig_TrySortMods_Patch.ExecuteVanillaSort = false;
             }
+        }
+
+        /// <summary>
+        /// BFS 检查在邻接表 adj 中从 source 是否可达 destination。
+        /// 用于判断添加一条反向边是否会产生环。
+        /// </summary>
+        private static bool CanReach(Dictionary<int, HashSet<int>> adj, int source, int destination)
+        {
+            var visited = new HashSet<int>();
+            var queue = new Queue<int>();
+            queue.Enqueue(source);
+            visited.Add(source);
+            while (queue.Count > 0)
+            {
+                int current = queue.Dequeue();
+                if (current == destination) return true;
+                if (!adj.TryGetValue(current, out var neighbors)) continue;
+                foreach (int next in neighbors)
+                    if (visited.Add(next))
+                        queue.Enqueue(next);
+            }
+            return false;
         }
 
         public override void DoWindowContents(Rect inRect)

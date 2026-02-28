@@ -18,6 +18,16 @@ namespace BetterModSort
         /// </summary>
         public bool EnableDebugDump = false;
 
+        /// <summary>
+        /// 发送给 AI 的报错日志最大字符数
+        /// </summary>
+        public int ErrorLogMaxChars = 8000;
+
+        /// <summary>
+        /// 提炼 MOD 短描述时截取原始描述的最大字符数
+        /// </summary>
+        public int ShortDescMaxChars = 2500;
+
         public override void ExposeData()
         {
             Scribe_Values.Look(ref ApiKey, "ApiKey", "");
@@ -25,6 +35,8 @@ namespace BetterModSort
             Scribe_Values.Look(ref ModelName, "ModelName", "gpt-4o");
             Scribe_Values.Look(ref EnableAISorting, "EnableAISorting", false);
             Scribe_Values.Look(ref EnableDebugDump, "EnableDebugDump", false);
+            Scribe_Values.Look(ref ErrorLogMaxChars, "ErrorLogMaxChars", 8000);
+            Scribe_Values.Look(ref ShortDescMaxChars, "ShortDescMaxChars", 2500);
             base.ExposeData();
         }
     }

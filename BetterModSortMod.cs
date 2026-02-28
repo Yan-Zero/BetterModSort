@@ -71,6 +71,14 @@ namespace BetterModSort
             listing.CheckboxLabeled("BMS_Settings_EnableAISorting".TranslateSafe(), ref Settings.EnableAISorting,
                 "BMS_Settings_EnableAISortingDesc".TranslateSafe());
             
+
+            listing.Label("BMS_Settings_LabelErrorLogMaxChars".TranslateSafe() + $": {Settings.ErrorLogMaxChars}");
+            Settings.ErrorLogMaxChars = (int)listing.Slider(Settings.ErrorLogMaxChars, 1000, 30000);
+
+            listing.Label("BMS_Settings_LabelShortDescMaxChars".TranslateSafe() + $": {Settings.ShortDescMaxChars}");
+            Settings.ShortDescMaxChars = (int)listing.Slider(Settings.ShortDescMaxChars, 500, 5000);
+
+
             listing.Gap();
 
             // ========== 调试选项 ==========

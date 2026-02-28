@@ -61,9 +61,10 @@ namespace BetterModSort.AI
             
             // 如果描述太长，截断它。保留头部即可，头部往往说明了 MOD 的用途。
             string safeDesc = rawDescription ?? "";
-            if (safeDesc.Length > 2500)
+            int descMaxLen = BetterModSortMod.Settings.ShortDescMaxChars;
+            if (safeDesc.Length > descMaxLen)
             {
-                int maxLen = 2500;
+                int maxLen = descMaxLen;
                 if (char.IsHighSurrogate(safeDesc[maxLen - 1])) maxLen--;
                 safeDesc = safeDesc.Substring(0, maxLen) + "\n...(截断)...";
             }
@@ -106,6 +107,8 @@ namespace BetterModSort.AI
                     details.Add($"Before: {string.Join(",", mod.LoadBefore)}");
                 if (mod.LoadAfter != null && mod.LoadAfter.Any())
                     details.Add($"After: {string.Join(",", mod.LoadAfter)}");
+                if (mod.IncompatibleWith != null && mod.IncompatibleWith.Any())
+                    details.Add($"Incompatible: {string.Join(",", mod.IncompatibleWith)}");
 
                 string suffix = details.Count > 0 ? $" ({string.Join(" | ", details)})" : "";
                 sb.AppendLine($"{i + 1}. [{mod.PackageId}] {mod.Name}{suffix}");
@@ -127,9 +130,10 @@ namespace BetterModSort.AI
                 
                 string safeErr = errorLogContent;
                 // 防止传入过长的整个报错文件超出 LLM 上下文限制，适度截短并只保留最新的部分（文本日志末尾为最新）
-                if (safeErr.Length > 4000)
+                int errMaxLen = BetterModSortMod.Settings.ErrorLogMaxChars;
+                if (safeErr.Length > errMaxLen)
                 {
-                    int maxLen = 4000;
+                    int maxLen = errMaxLen;
                     int startIndex = safeErr.Length - maxLen;
                     // 防止把 Emoji 或 Surrogate Pair 切开
                     if (char.IsLowSurrogate(safeErr[startIndex]))
@@ -145,13 +149,14 @@ namespace BetterModSort.AI
 
             sb.AppendLine("【任务说明与输出格式要求】");
             sb.AppendLine("请不要返回一大段长篇大论或修改原列表。只需返回一个符合下述格式的 JSON 数组。");
-            sb.AppendLine("数组中的每个对象代表给某一个特定 MOD 追加的『临时 LoadBefore / LoadAfter 软约束』。");
+            sb.AppendLine("数组中的每个对象代表给某一个特定 MOD 追加的『临时 LoadBefore / LoadAfter 软约束』或『不兼容声明 IncompatibleWith』。");
             sb.AppendLine();
             sb.AppendLine("请注意：");
             sb.AppendLine("1. 仅针对真正需要调整顺序、有已知冲突风险或明确依赖（但未在上述清单中体现）的民间 MOD 给定软约束。");
-            sb.AppendLine("2. 根据【嫌疑 MOD 简述】和【报错日志】，推算其中由于加载顺序不对（例如 A 需要借用 B 代码而排在了 B 之前，或是框架前置错乱）导致的问题，制定修复约束！");
-            sb.AppendLine("3. 不必为所有 MOD 生成规则，只输出必须改变其当前排位的规则！");
-            sb.AppendLine("4. 你的输出【只能包含合法的 JSON 数组结构】，不需要包含任何解释。");
+            sb.AppendLine("2. 根据【嫌疑 MOD 简述】和【报错日志】，推算其中由于加载顺序不对导致的问题，制定修复约束！");
+            sb.AppendLine("3. 除非 100% 确定两个 MOD 功能互斥（完全不能同时加载），否则不要随意添加 `IncompatibleWith` 标记。该标记会导致原版直接置红并拒绝排序！");
+            sb.AppendLine("4. 不必为所有 MOD 生成规则，只输出必须改变其当前排位的规则！");
+            sb.AppendLine("5. 你的输出【只能包含合法的 JSON 数组结构】，不需要包含任何解释。");
             sb.AppendLine();
             sb.AppendLine("JSON 示例格式：");
             sb.AppendLine("```json");
@@ -159,8 +164,9 @@ namespace BetterModSort.AI
             sb.AppendLine("  \"constraints\": [");
             sb.AppendLine("    {");
             sb.AppendLine("      \"PackageId\": \"authorA.modA\",");
-            sb.AppendLine("      \"LoadBefore\": [\"authorB.modB\", \"authorC.modC\"],");
-            sb.AppendLine("      \"LoadAfter\": []");
+            sb.AppendLine("      \"LoadBefore\": [\"authorB.modB\"],");
+            sb.AppendLine("      \"LoadAfter\": [],");
+            sb.AppendLine("      \"IncompatibleWith\": [\"authorC.modC\"]");
             sb.AppendLine("    }");
             sb.AppendLine("  ]");
             sb.AppendLine("}");

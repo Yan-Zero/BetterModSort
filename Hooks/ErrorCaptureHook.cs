@@ -10,10 +10,10 @@ namespace BetterModSort.Hooks
     {
         private static readonly List<IErrorEnricher> Enrichers = new List<IErrorEnricher>
         {
-            new TextureErrorEnricher(),
             new DefConfigErrorEnricher(),
             new XmlErrorEnricher(),
-            new CrossReferenceErrorEnricher()
+            new CrossReferenceErrorEnricher(),
+            new FilePathEnricher()  // 通用兜底：匹配任意文件路径
         };
 
         public static void RegisterEnricher(IErrorEnricher enricher)

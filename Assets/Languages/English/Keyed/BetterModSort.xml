@@ -9,6 +9,8 @@
   <BMS_Settings_SectionExperimental>── Experimental Features ──</BMS_Settings_SectionExperimental>
   <BMS_Settings_EnableAISorting>Enable AI-assisted sorting (Experimental, replaces vanilla auto-sort)</BMS_Settings_EnableAISorting>
   <BMS_Settings_EnableAISortingDesc>When enabled, clicking "Auto-sort" will call an LLM to generate soft constraints, then use vanilla topological sort. When disabled, vanilla sorting is used.</BMS_Settings_EnableAISortingDesc>
+  <BMS_Settings_LabelErrorLogMaxChars>Max error log chars sent to AI</BMS_Settings_LabelErrorLogMaxChars>
+  <BMS_Settings_LabelShortDescMaxChars>Max raw description chars for summary extraction</BMS_Settings_LabelShortDescMaxChars>
   <BMS_Settings_SectionDebug>── Debug Options ──</BMS_Settings_SectionDebug>
   <BMS_Settings_EnableDebugDump>Enable Debug Dump (write LLM request/response to files)</BMS_Settings_EnableDebugDump>
   <BMS_Settings_EnableDebugDumpDesc>When enabled, full Prompt and Response of each LLM call will be written to files under %LOCALAPPDATA%Low/Ludeon Studios/RimWorld by Ludeon Studios/BetterModSort/.</BMS_Settings_EnableDebugDumpDesc>
