@@ -1,166 +1,167 @@
 # Better Mod Sort (And Error Inspector)
 
+[English](README.md) | [简体中文](README.zh.md)
+
 <p align="center">
   <img src="Assets/About/preview.png" alt="Better Mod Sort" width="600"/>
 </p>
 
 <p align="center">
-  RimWorld 1.6 · 前置 MOD: <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077">Harmony</a>
+  RimWorld 1.6 · Prerequisite MOD: <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077">Harmony</a>
   ·
-  <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3673408015">Steam 创意工坊页面</a>
+  <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3673408015">Steam Workshop Page</a>
 </p>
 
 ---
 
-## 这 MOD 干嘛的
+## What Does This Mod Do?
 
-装了一堆 MOD，不知道怎么排加载顺序？这个 MOD 可以接入大语言模型（LLM），让 AI 根据你的 MOD 列表和实际报错情况，帮你建议一个更合理的加载顺序。
+Have you installed a bunch of mods and don't know how to arrange the load order? This mod can connect to Large Language Models (LLMs) to suggest a more reasonable load order based on your mod list and actual error logs.
 
-为了让 AI 知道哪些 MOD 之间可能有冲突，MOD 会在后台自动拦截游戏运行时的报错，分析出是哪个 MOD 引起的，记录下来作为 AI 排序的参考依据。所以一般的用法是：**先正常玩一局（或者至少加载一次游戏），让 MOD 收集到足够的报错信息，然后再用 AI 排序**，效果会比较好。
+To let the AI know which mods might be conflicting, the mod automatically intercepts errors during game startup/running in the background, analyzes which mod caused them, and records them as a reference for AI sorting. Therefore, the general usage is: **play a session normally first (or at least load the game once) so the mod collects enough error information, and then use AI to sort.** This yields better results.
 
-当然，报错分析本身也有用，就算你不用 AI 排序，它也能帮你看清楚红字到底是谁的锅。
+Of course, the error analysis itself is also incredibly useful. Even if you don't use AI sorting, it can help you clearly see whose fault the red errors are.
 
 ---
 
-## 功能
+## Features
 
-### AI 辅助排序（实验性）
+### AI-Assisted Sorting (Experimental)
 
-这是这个 MOD 的主要功能，默认关闭，需要在 MOD 设置里手动开启，并配好 LLM 的 API Key。
+This is the main feature of the mod. It is disabled by default and needs to be manually enabled in the Mod Settings, along with configuring the LLM's API Key.
 
-开启后，MOD 列表里的「自动排序」按钮会走 AI 流程：
+Once enabled, the "Auto-sort" button in the mod list will trigger the AI process:
 
-1. **收集基础结构** — 为了节省 Token，引擎不会发送所有 MOD 的详细介绍，只收集所有激活 MOD 的名称和原版加载要求（如 `loadBefore` / `loadAfter` 等依赖关系）。
-2. **提炼嫌疑 MOD 描述** — 只有曾在游戏中引发过报错的「嫌疑 MOD」，才会调用 LLM 将其描述浓缩为短描述（结果会缓存到本地，下次不必重复提炼）。
-3. **生成软约束** — 将上述精简后的 MOD 信息和历史报错记录一并提交给 LLM，请求生成 `loadBefore` / `loadAfter` 形式的排序建议
-4. **拓扑排序** — 将 AI 返回的软约束注入原版排序引擎，执行拓扑排序
+1. **Collect Basic Structure** — To save tokens, the engine won't send the detailed descriptions of all mods. It only collects the names of all active mods and vanilla load requirements (like `loadBefore` / `loadAfter` dependencies).
+2. **Extract Descriptions of Suspect Mods** — Only "suspect mods" that have caused errors in the game will be passed to the LLM to shrink their descriptions into short summaries. (The results are cached locally so they don't need to be extracted again next time).
+3. **Generate Soft Constraints** — The condensed mod information and historical error records are submitted to the LLM, requesting sorting suggestions in the form of `loadBefore` / `loadAfter`.
+4. **Topological Sort** — The soft constraints returned by the AI are injected into the vanilla sorting engine, which then performs a topological sort.
 
-所以要想 AI 排得准，最好先带着当前的 MOD 列表跑一次游戏，让报错分析系统积累一些数据。第一次用、什么报错数据都没有的时候也能排，只是 AI 能参考的信息会少一些。
+So, for the AI to sort accurately, it's best to run the game once with your current mod list so the error analysis system can accumulate some data. It can still sort the first time you use it with no error data, but the AI will have less information to reference.
 
-注意 AI 排序会消耗 API Token，400 个 MOD 的情况下，Input 大约消耗 2 万 Token。
+Note that AI sorting consumes API tokens. For instance, with 400 mods, the input will consume about 20k tokens.
 
-### 报错来源分析
+### Error Source Analysis
 
-这个功能装上就自动生效，不需要额外操作。它既是给 AI 排序提供数据的，也可以单独当排错工具用。
+This feature works automatically as soon as it's installed; no extra configuration is needed. It provides data for AI sorting, but it can also be used as a standalone troubleshooting tool.
 
-当游戏出现红色报错时，MOD 会从这几个方向去分析：
+When red errors occur in the game, the mod analyzes them from the following aspects:
 
-- **DLL 堆栈追踪** — 从异常的调用栈里提取每一帧对应的程序集，反查是哪个 MOD 的 DLL
-- **XML Def 来源** — 加载过程中记录每个 Def 是从哪个文件来的，报错时直接定位
-- **Patch xpath 映射** — 在 Patch 应用前把所有 `PatchOperationPathed` 的 xpath 收集起来，关联到对应的 MOD
-- **交叉引用分析** — 解析 `Could not resolve cross-reference` 这类错误里涉及的 defName
-- **材质/贴图路径** — 从 `Cannot load texture` 之类的错误里提取路径，匹配到 MOD 目录
-- **XML 继承链** — 沿 `ParentName` 一层层往上找，定位冲突可能出在哪一层
-- **Steam 创意工坊 ID** — 从文件路径里提取 Workshop ID 来匹配 MOD
+- **DLL Stack Trace Mapping** — Extracts the assembly corresponding to each frame from the exception's call stack to find out which mod's DLL it is.
+- **XML Parsing Exception Localization** — Intercepts the underlying XML processing routines, directly mapping the exact XML nodes that threw an exception back to their source files, mods, and specific XML NodePaths.
+- **Def Config Error Analysis** — Intercepts Def configuration errors, traces their actual source files, extracts the entire `ParentName` inheritance chain, and identifies all Patch operations applied to that Def and its parent nodes.
+- **Cross-Reference Sourcing** — Deeply parses errors like `Could not resolve cross-reference` to track down the exact Def, file, and specific XML node that used the missing reference, and lists any involved Patches.
+- **CE Compatibility Attribution** — Resolves `no support for Combat Extended` errors by deeply analyzing stack frame parameters to pinpoint the specific item or race Defs that lack CE compatibility.
+- **File Path & Workshop ID Extraction** — Extracts local path strings from errors like `Cannot load texture` or missing files, matching them to active mod root directories or decoding Steam Workshop IDs to find the mod.
 
-分析结果会保存到存档目录下的 `BetterModSort.Error.txt`，上次的会备份为 `BetterModSort.Error.prev.txt`。同时也会在游戏控制台（按 `~` 打开）里输出格式化的报告，大概长这样：
+The analysis results are saved to `BetterModSort.Error.txt` in the save directory, and the previous session's log is backed up as `BetterModSort.Error.prev.txt`. Formatted reports are also output in the game console (press `~` to open), looking something like this:
 
 ```text
 Could not resolve cross-reference to Verse.WorkTypeDef named DoctorRescue (wanter=workTypes)
-  -> [交叉引用被使用: DoctorRescue]
+  -> [Cross-ref used in: DoctorRescue]
      - [Mod: Project RimFactory - Drones (spdskatr.projectrimfactory.drones)] Defs/ThingDef[defName=WarDroneStation]/modExtensions/li/workTypes
        File: D:\SteamLibrary\steamapps\workshop\content\294100\2037491557\Defs\ThingDefs_Buildings\Buildings_DroneStation.xml
-  -> [Patch 可能涉及: WarDroneStation]
+  -> [Patch possibly involving: WarDroneStation]
      - [Mod: Project RimFactory - Drones (spdskatr.projectrimfactory.drones)] PatchOperationAdd (FindMod: Achtung!)
 ```
 
 ```text
-[BetterModSort] ========== 错误分析 ==========
-时间: 10:10:20
-错误: Trying to get stat MeleeDamageAverage from TM_GloryMaul which has no support for Combat Extended.
-涉及的 MOD (3):
+[BetterModSort] ========== Error Analysis ==========
+Time: 10:10:20
+Error: Trying to get stat MeleeDamageAverage from TM_GloryMaul which has no support for Combat Extended.
+Related Mods (3):
   - [ceteam.combatextended] Combat Extended
     DLL: CombatExtended
-    位置: CombatExtended.StatWorker_MeleeDamageAverage.GetValueUnfinalized
+    Location: CombatExtended.StatWorker_MeleeDamageAverage.GetValueUnfinalized
   - [andromeda.nicebilltab] Nice Bill Tab
     DLL: NiceBillTab
-    位置: NiceBillTab.StatRequestWorker.GetDPS
+    Location: NiceBillTab.StatRequestWorker.GetDPS
   - [ilyvion.loadingprogress] Loading Progress
     DLL: ilyvion.LoadingProgress
-    位置: ilyvion.LoadingProgress.StaticConstructorOnStartupUtilityReplacement+d__2.MoveNext
+    Location: ilyvion.LoadingProgress.StaticConstructorOnStartupUtilityReplacement+d__2.MoveNext
 =====================================
 ```
 
 ---
 
-## 安装
+## Installation
 
-### Steam 创意工坊
+### Steam Workshop
 
-1. 订阅 [Better Mod Sort](https://steamcommunity.com/sharedfiles/filedetails/?id=3673408015)
-2. 确保也订阅了 [Harmony](https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077)
-3. 在 MOD 列表中激活，Harmony 排在前面
+1. Subscribe to [Better Mod Sort](https://steamcommunity.com/sharedfiles/filedetails/?id=3673408015)
+2. Ensure you are also subscribed to [Harmony](https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077)
+3. Activate them in the mod list, placing Harmony above this mod.
 
-### 手动安装
+### Manual Installation
 
-1. 下载 Release 或 clone 本仓库
-2. 将 `Assets` 文件夹内容复制到 `Mods/BetterModSort/`
-3. 编译项目，把生成的 DLL 放到 `Assemblies/` 目录下
-
----
-
-## 设置
-
-在游戏里点 **选项 → MOD 设置 → Better Mod Sort** 打开。
-
-### AI 连接配置
-
-- **LLM API Key** — 你的 API 密钥，留空则 AI 功能不可用
-- **LLM Base URL** — API 地址，默认是 `https://api.openai.com/v1/chat/completions`。用 DeepSeek、Ollama 之类的兼容服务改成对应地址就行
-- **LLM Model Name** — 模型名，默认 `gpt-4o`
-
-### 实验性功能
-
-- **启用 AI 辅助排序** — 勾上之后「自动排序」按钮会走 AI 流程，默认关闭
-- **发送给 AI 的报错日志最大字符数** — 限制报错内容的长度，防止单个庞大报错占满上下文（默认 8000）
-- **提炼短描述时截取原始描述的最大字符数** — 限制提取描述时的长度，节省 Token（默认 2500）
-- **LLM 请求超时时间（秒）** — 设置单次请求的最大等待时间（默认 600 秒）
-
-### 调试选项
-
-- **启用 Debug Dump** — 把每次 LLM 通信的关键摘要信息写到文件里，方便排查提示词带来的影响。文件在 `%LOCALAPPDATA%Low/Ludeon Studios/RimWorld by Ludeon Studios/BetterModSort/Dump/` 下面
-- **打开数据文件夹** — 在游戏内点击可以直接通过资源管理器打开 MOD 的数据存放目录，包含 `Dump`（LLM 通信总结日志）、`ShortDesc`（AI 提炼的 Mod Desc 摘要缓存）以及 `BetterModSort.Error.txt`（报错分析记录文件）。
+1. Download the Release or clone this repository.
+2. Copy the contents of the `Assets` folder to `Mods/BetterModSort/`
+3. Compile the project and place the generated DLL in the `Assemblies/` directory.
 
 ---
 
-## 多语言
+## Settings
 
-目前支持英语、简体中文和俄语。
+In the game, click **Options → Mod Settings → Better Mod Sort** to open.
 
-翻译文件在 `Assets/Languages/<语言>/Keyed/BetterModSort.xml`，欢迎提 PR 补充其他语言。
+### AI Connection Configuration
+
+- **LLM API Key** — Your API key. If left blank, AI features will be unavailable.
+- **LLM Base URL** — API address, defaulting to `https://api.openai.com/v1/chat/completions`. You can alter this to use compatible services like DeepSeek or Ollama.
+- **LLM Model Name** — The model name, defaulting to `gpt-4o`.
+
+### Experimental Features
+
+- **Enable AI-Assisted Sorting** — Once checked, the "Auto-sort" button uses the AI process. Disabled by default.
+- **Max Error Log Characters Sent to AI** — Limits the length of error content to prevent a single massive error from filling the context (Default: 8000).
+- **Max Raw Description Characters for Summary Extraction** — Limits the length when extracting descriptions to save tokens (Default: 2500).
+- **LLM Request Timeout (seconds)** — Sets the maximum waiting time for a single request (Default: 600).
+
+### Debug Options
+
+- **Enable Debug Dump** — Writes a key summary of each LLM communication to a file to help troubleshoot issues caused by prompts. Files are located under `%LOCALAPPDATA%Low/Ludeon Studios/RimWorld by Ludeon Studios/BetterModSort/Dump/`.
+- **Open Data Folder** — Clicking this in-game directly opens the mod's data storage directory via the file explorer, which contains `Dump` (LLM communication summary logs), `ShortDesc` (AI-extracted Mod Desc summary cache), and `BetterModSort.Error.txt` (error analysis log file).
 
 ---
 
-## 项目结构
+## Localization
+
+Currently supports English, Simplified Chinese, and Russian.
+
+Translation files are located at `Assets/Languages/<Language>/Keyed/BetterModSort.xml`. Pull Requests to add more languages are welcome.
+
+---
+
+## Project Structure
 
 ```txt
 BetterModSort/
 ├── Assets/
-│   ├── About/                 # MOD 元信息、预览图
-│   └── Languages/             # 翻译文件
+│   ├── About/                 # Mod metadata, preview image
+│   └── Languages/             # Translation files
 ├── AI/
-│   ├── Dialog_AILoading.cs    # AI 排序进度弹窗
-│   ├── LLMClient.cs           # OpenAI 兼容的 HTTP 客户端
-│   ├── MetaDataManager.cs     # 嫌疑 MOD 名单 & 短描述缓存的持久化
-│   └── PromptBuilder.cs       # 构建各类 Prompt
+│   ├── Dialog_AILoading.cs    # AI sorting progress dialog
+│   ├── LLMClient.cs           # OpenAI-compatible HTTP client
+│   ├── MetaDataManager.cs     # Suspect mod list & short desc cache persistence
+│   └── PromptBuilder.cs       # Builds various Prompts
 ├── Core/
-│   └── ErrorAnalysis/         # 错误分析核心
-│       ├── Enrichers/         # 各种具体的错误类型处理器 (XML, CE, DefConfig等)
+│   └── ErrorAnalysis/         # Error analysis core
+│       ├── Enrichers/         # Specific error enrichers (XML, CE, DefConfig, etc.)
 │       ├── CapturedErrorInfo.cs
 │       ├── ErrorAnalyzer.cs
 │       ├── ErrorHistoryManager.cs
-│       ├── IEnrichmentData.cs # Enrichment 数据统一接口
-│       └── IErrorEnricher.cs  # Enricher 统一接口
+│       ├── IEnrichmentData.cs # Standard interface for Enrichment Data
+│       └── IErrorEnricher.cs  # Standard interface for Enrichers
 ├── Hooks/
-│   ├── ErrorCaptureHook.cs    # 错误发生时的拦截入口
-│   ├── LogPatch.cs            # Hook Log.Error / ErrorOnce
-│   ├── ModsConfigPatch.cs     # 替换自动排序 & 重复 MOD 检测
-│   └── XmlSource.cs           # Hook 游戏资源加载以建立追踪
+│   ├── ErrorCaptureHook.cs    # Interception entry point when an error occurs
+│   ├── LogPatch.cs            # Hooks Log.Error / ErrorOnce
+│   ├── ModsConfigPatch.cs     # Hacks auto-sort & duplicate mod checking
+│   └── XmlSource.cs           # Hooks game asset loading to build tracking
 ├── Tools/
-│   ├── DllLookupTool.cs       # DLL ↔ MOD 映射
-│   ├── I18n.cs                # 早期多语言加载
-│   ├── ModInfo.cs             # 统一的 MOD 信息实体
-│   └── XmlSourceMap.cs        # Def/Patch 的来源追踪储存字典
-├── BetterModSortMod.cs        # MOD 入口
-└── BetterModSortSettings.cs   # 设置定义
+│   ├── DllLookupTool.cs       # DLL ↔ Mod Mapping
+│   ├── I18n.cs                # Early multi-language loading
+│   ├── ModInfo.cs             # Unified Mod info entity
+│   └── XmlSourceMap.cs        # Source tracking dictionary for Defs/Patches
+├── BetterModSortMod.cs        # Mod entry point
+└── BetterModSortSettings.cs   # Settings definitions
 ```

@@ -29,6 +29,11 @@ namespace BetterModSort
         public int ShortDescMaxChars = 2500;
 
         /// <summary>
+        /// 低于此字数的原始描述将直接跳过大模型提炼（原文直出）
+        /// </summary>
+        public int ShortDescBypassThreshold = 200;
+
+        /// <summary>
         /// LLM 请求超时时间（秒）
         /// </summary>
         public int LLMTimeoutSeconds = 600;
@@ -42,6 +47,7 @@ namespace BetterModSort
             Scribe_Values.Look(ref EnableDebugDump, "EnableDebugDump", false);
             Scribe_Values.Look(ref ErrorLogMaxChars, "ErrorLogMaxChars", 8000);
             Scribe_Values.Look(ref ShortDescMaxChars, "ShortDescMaxChars", 2500);
+            Scribe_Values.Look(ref ShortDescBypassThreshold, "ShortDescBypassThreshold", 200);
             Scribe_Values.Look(ref LLMTimeoutSeconds, "LLMTimeoutSeconds", 600);
             base.ExposeData();
         }

@@ -84,6 +84,12 @@ namespace BetterModSort
             if (int.TryParse(shortDescMaxStr, out int parsedDescMax) && parsedDescMax > 0)
                 Settings.ShortDescMaxChars = parsedDescMax;
 
+            listing.Label("BMS_Settings_LabelShortDescBypassThreshold".TranslateSafe());
+            string shortDescBypassStr = Settings.ShortDescBypassThreshold.ToString();
+            shortDescBypassStr = listing.TextEntry(shortDescBypassStr);
+            if (int.TryParse(shortDescBypassStr, out int parsedBypass) && parsedBypass >= 0)
+                Settings.ShortDescBypassThreshold = parsedBypass;
+
             listing.Label("BMS_Settings_LabelLLMTimeout".TranslateSafe());
             string timeoutStr = Settings.LLMTimeoutSeconds.ToString();
             timeoutStr = listing.TextEntry(timeoutStr);
@@ -99,13 +105,16 @@ namespace BetterModSort
             listing.CheckboxLabeled("BMS_Settings_EnableDebugDump".TranslateSafe(), ref Settings.EnableDebugDump,
                 "BMS_Settings_EnableDebugDumpDesc".TranslateSafe());
 
+            string rootDir = System.IO.Path.Combine(GenFilePaths.SaveDataFolderPath, "BetterModSort");
             if (listing.ButtonText("BMS_Settings_OpenDumpFolder".TranslateSafe()))
             {
-                string rootDir = System.IO.Path.Combine(GenFilePaths.SaveDataFolderPath, "BetterModSort");
+                
                 if (!System.IO.Directory.Exists(rootDir))
                     System.IO.Directory.CreateDirectory(rootDir);
-                System.Diagnostics.Process.Start("explorer.exe", rootDir);
+                // 使用跨平台方式打开文件夹
+                Application.OpenURL(rootDir);
             }
+            listing.SubLabel(rootDir, 0.6f);
 
             listing.End();
             base.DoSettingsWindowContents(inRect);

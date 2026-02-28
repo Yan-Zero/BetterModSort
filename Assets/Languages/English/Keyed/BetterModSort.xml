@@ -11,6 +11,7 @@
   <BMS_Settings_EnableAISortingDesc>When enabled, clicking "Auto-sort" will call an LLM to generate soft constraints, then use vanilla topological sort. When disabled, vanilla sorting is used.</BMS_Settings_EnableAISortingDesc>
   <BMS_Settings_LabelErrorLogMaxChars>Max error log chars sent to AI</BMS_Settings_LabelErrorLogMaxChars>
   <BMS_Settings_LabelShortDescMaxChars>Max raw description chars for summary extraction</BMS_Settings_LabelShortDescMaxChars>
+  <BMS_Settings_LabelShortDescBypassThreshold>Bypass AI extraction for mods with descriptions shorter than this length (send raw text instead)</BMS_Settings_LabelShortDescBypassThreshold>
   <BMS_Settings_SectionDebug>── Debug Options ──</BMS_Settings_SectionDebug>
   <BMS_Settings_EnableDebugDump>Enable Debug Dump (write LLM key info to files)</BMS_Settings_EnableDebugDump>
   <BMS_Settings_EnableDebugDumpDesc>When enabled, a summary of each LLM call (model, token usage, response content) will be written to files in the Dump subdirectory.</BMS_Settings_EnableDebugDumpDesc>

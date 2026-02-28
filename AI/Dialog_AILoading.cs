@@ -68,16 +68,31 @@ namespace BetterModSort.AI
                     suspectShortDescs[packageId] = shortDesc;
                 else
                 {
-                    // 3. 缓存失效或不存在，小请求 AI 提炼
-                    _statusText = "BMS_AILoading_AnalyzingDesc".TranslateSafe(mod.Name);
-                    string promptShort = PromptBuilder.BuildShortDescPrompt(mod.PackageId, mod.Name, rawDesc);
+                    // 3. 缓存失效或不存在，小请求 AI
                     try
                     {
-                        string aiShortResult = await LLMClient.SendChatRequestAsync(promptShort, expectJsonFormat: false);
+                        // 如果原始描述很短，直接跳过 AI 提炼使用原文
+                        if (rawDesc.Length <= BetterModSortMod.Settings.ShortDescBypassThreshold)
+                        {
+                            suspectShortDescs[packageId] = rawDesc;
+                            MetaDataManager.SaveShortDesc(packageId, rawDesc, rawDesc);
+                            continue;
+                        }
+
+                        _statusText = "BMS_AILoading_AnalyzingDesc".TranslateSafe(mod.Name);
+                        string promptForDesc = PromptBuilder.BuildShortDescPrompt(mod.PackageId, mod.Name, rawDesc);
+                        string aiShortResult = await LLMClient.SendChatRequestAsync(promptForDesc, expectJsonFormat: false);
+                        
                         if (!string.IsNullOrWhiteSpace(aiShortResult))
                         {
-                            MetaDataManager.SaveShortDesc(packageId, rawDesc, aiShortResult.Trim());
-                            suspectShortDescs[packageId] = aiShortResult.Trim();
+                            string finalDesc = aiShortResult.Trim();
+                            // 如果 AI 生成的内容不仅没缩短，反而比原文还长，那就直接弃用 AI 生成的，改用原文。
+                            if (finalDesc.Length >= rawDesc.Length)
+                            {
+                                finalDesc = rawDesc;
+                            }
+                            MetaDataManager.SaveShortDesc(packageId, rawDesc, finalDesc);
+                            suspectShortDescs[packageId] = finalDesc;
                         }
                     }
                     catch (Exception ex)

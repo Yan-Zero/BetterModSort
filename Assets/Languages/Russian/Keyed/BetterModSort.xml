@@ -11,6 +11,7 @@
   <BMS_Settings_EnableAISortingDesc>Если включено, нажатие кнопки «Автосортировка» вызовет LLM для генерации мягких ограничений, а затем будет использована ванильная топологическая сортировка. Если выключено, используется стандартная сортировка.</BMS_Settings_EnableAISortingDesc>
   <BMS_Settings_LabelErrorLogMaxChars>Макс. символов журнала ошибок для AI</BMS_Settings_LabelErrorLogMaxChars>
   <BMS_Settings_LabelShortDescMaxChars>Макс. символов описания для извлечения сводки</BMS_Settings_LabelShortDescMaxChars>
+  <BMS_Settings_LabelShortDescBypassThreshold>Игнорировать извлечение ИИ для модов с описанием короче этого значения (отправлять исходный текст)</BMS_Settings_LabelShortDescBypassThreshold>
   <BMS_Settings_SectionDebug>── Опции отладки ──</BMS_Settings_SectionDebug>
   <BMS_Settings_EnableDebugDump>Включить дамп отладки (запись ключевой информации LLM в файлы)</BMS_Settings_EnableDebugDump>
   <BMS_Settings_EnableDebugDumpDesc>Если включено, сводка каждого вызова LLM (модель, использование токенов, содержание ответа) будет записываться в файлы в подкаталоге Dump.</BMS_Settings_EnableDebugDumpDesc>

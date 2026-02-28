@@ -33,6 +33,14 @@ It can still sort the first time you use it when there is no error data at all, 
 
 This feature takes effect automatically once installed, requiring no extra actions. It provides data for AI sorting and can also be used independently as a troubleshooting tool.
 
+When red errors occur in the game, the mod deeply analyzes them from the following aspects:
+- [b]DLL Stack Trace Mapping[/b] — Extracts the assembly corresponding to each frame from the exception's call stack to find out which mod's DLL it is.
+- [b]XML Parsing Exception Localization[/b] — Intercepts the underlying XML processing routines, directly mapping the exact XML nodes that threw an exception back to their source files, mods, and specific XML NodePaths.
+- [b]Def Config Error Analysis[/b] — Intercepts Def configuration errors, traces their actual source files, extracts the entire `ParentName` inheritance chain, and identifies all Patch operations applied to that Def and its parent nodes.
+- [b]Cross-Reference Sourcing[/b] — Deeply parses errors like `Could not resolve cross-reference` to track down the exact Def, file, and specific XML node that used the missing reference, and lists any involved Patches.
+- [b]CE Compatibility Attribution[/b] — Resolves `no support for Combat Extended` errors by deeply analyzing stack frame parameters to pinpoint the specific item or race Defs that lack CE compatibility.
+- [b]File Path & Workshop ID Extraction[/b] — Extracts local path strings from errors like `Cannot load texture` or missing files, matching them to active mod root directories or decoding Steam Workshop IDs to find the mod.
+
 The analysis results will be saved to `BetterModSort.Error.txt` in your save directory, and the previous results will be backed up as `BetterModSort.Error.prev.txt`. Formatted reports will also be output in the in-game console (open by pressing `~`), looking something like this:
 
 (XML related)

@@ -11,6 +11,7 @@
   <BMS_Settings_EnableAISortingDesc>开启后，点击「自动排序」将调用大模型生成软约束，再由原版拓扑排序引擎执行。关闭时使用原版排序。</BMS_Settings_EnableAISortingDesc>
   <BMS_Settings_LabelErrorLogMaxChars>发送给 AI 的报错日志最大字符数</BMS_Settings_LabelErrorLogMaxChars>
   <BMS_Settings_LabelShortDescMaxChars>提炼短描述时截取原始描述的最大字符数</BMS_Settings_LabelShortDescMaxChars>
+  <BMS_Settings_LabelShortDescBypassThreshold>低于此字数的 MOD 不会调用 AI 提炼短描述，直接发送原文</BMS_Settings_LabelShortDescBypassThreshold>
   <BMS_Settings_SectionDebug>── 调试选项 ──</BMS_Settings_SectionDebug>
   <BMS_Settings_EnableDebugDump>启用 Debug Dump（将 LLM 关键信息写入文件）</BMS_Settings_EnableDebugDump>
   <BMS_Settings_EnableDebugDumpDesc>开启后，每次 LLM 通信的关键摘要（模型、Token 用量、回复内容）会写入 Dump 子目录下的文件。</BMS_Settings_EnableDebugDumpDesc>

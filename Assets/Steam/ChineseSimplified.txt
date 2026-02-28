@@ -35,6 +35,14 @@
 
 这个功能装上就自动生效，不需要额外操作。它既是给 AI 排序提供数据的，也可以单独当排错工具用。
 
+当游戏出现红色报错时，MOD 会从这几个方向去深度层析：
+- [b]DLL 栈帧映射[/b] — 从异常的调用栈里提取每一帧对应的程序集，反查是哪个 MOD 的 DLL。
+- [b]XML 解析异常定位[/b] — 拦截底层 XML 处理模块，将抛出异常的 XML 节点直接映射回来源文件与对应的 MOD 及具体的 XML NodePath。
+- [b]Def 配置错误分析[/b] — 深度拦截 Def 的配置警告报错，追踪其实际来源文件，提取它完整的 `ParentName` 继承链，并找出所有曾对该 Def 及其父节点下过手的 Patch 操作。
+- [b]交叉引用溯源[/b] — 深度解析 `Could not resolve cross-reference` 等链接引用错误，追查到具体是哪个 Def 在哪个文件里的哪个具体的 XML 节点使用该引用，并列出牵涉其中的 Patch 操作。
+- [b]CE 兼容性归因[/b] — 针对 `no support for Combat Extended` 的报错，通过深度反查异常堆栈的参数，精准揪出没有兼容 CE 的具体物品或种族 Def 来源。
+- [b]文件路径与创意工坊 ID 提取[/b] — 从 `Cannot load texture` 或找不到文件的红字里提取本地路径字符串，通过匹配启用 MOD 的根目录或解析路径中的 Steam 创意工坊 ID 来定位对应 MOD。
+
 分析结果会保存到存档目录下的 `BetterModSort.Error.txt`，上次的会备份为 `BetterModSort.Error.prev.txt`。同时也会在游戏控制台（按 `~` 打开）里输出格式化的报告，大概长这样：
 
 （XML 相关）
