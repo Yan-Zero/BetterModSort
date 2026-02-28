@@ -5,6 +5,8 @@ namespace BetterModSort.Core.ErrorAnalysis.Enrichers
 {
     public class XmlErrorEnricher : IErrorEnricher
     {
+        public int Priority => 50;
+
         public bool CanEnrich(string errorText)
         {
             return errorText.StartsWith("XML error: ");

@@ -12,6 +12,8 @@ namespace BetterModSort.Core.ErrorAnalysis.Enrichers
 {
     public class CrossReferenceErrorEnricher : IErrorEnricher
     {
+        public int Priority => 50;
+
         public bool CanEnrich(string errorText)
         {
             return errorText.StartsWith("Could not resolve cross-reference to");

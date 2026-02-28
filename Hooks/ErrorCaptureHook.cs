@@ -8,27 +8,35 @@ namespace BetterModSort.Hooks
 {
     public static class ErrorCaptureHook
     {
-        private static readonly List<IErrorEnricher> Enrichers = new List<IErrorEnricher>
+        private static int _insertionCounter = 0;
+
+        private static readonly SortedSet<EnricherEntry> _enricherSet = new(EnricherEntry.Comparer.Instance);
+
+        static ErrorCaptureHook()
         {
-            new DefConfigErrorEnricher(),
-            new XmlErrorEnricher(),
-            new CrossReferenceErrorEnricher(),
-            new FilePathEnricher()  // 通用兜底：匹配任意文件路径
-        };
+            RegisterEnricher(new DefConfigErrorEnricher());
+            RegisterEnricher(new XmlErrorEnricher());
+            RegisterEnricher(new CrossReferenceErrorEnricher());
+            RegisterEnricher(new FilePathEnricher());
+        }
 
         public static void RegisterEnricher(IErrorEnricher enricher)
         {
-            if (enricher != null && !Enrichers.Contains(enricher))
-                Enrichers.Add(enricher);
+            if (enricher == null) return;
+            // 避免重复注册同类型
+            foreach (var entry in _enricherSet)
+                if (entry.Enricher.GetType() == enricher.GetType())
+                    return;
+            _enricherSet.Add(new EnricherEntry(enricher, _insertionCounter++));
         }
 
         public static string? TryEnrichErrorText(string text)
         {
             if (string.IsNullOrEmpty(text)) return null;
 
-            foreach (var enricher in Enrichers)
-                if (enricher.CanEnrich(text))
-                    return enricher.Enrich(text);
+            foreach (var entry in _enricherSet)
+                if (entry.Enricher.CanEnrich(text))
+                    return entry.Enricher.Enrich(text);
             return null;
         }
 
@@ -43,32 +51,27 @@ namespace BetterModSort.Hooks
             ErrorHistoryManager.RecordError(capturedInfo, isEnriched);
         }
         
-        // 保留原有的公开 API，指向 ErrorHistoryManager
-        public static bool EnableDebugOutput 
-        { 
-            get => ErrorHistoryManager.EnableDebugOutput; 
-            set => ErrorHistoryManager.EnableDebugOutput = value; 
-        }
-
-        public static List<CapturedErrorInfo> ErrorHistory => ErrorHistoryManager.ErrorHistory;
-
-        public static int MaxHistoryCount 
-        { 
-            get => ErrorHistoryManager.MaxHistoryCount; 
-            set => ErrorHistoryManager.MaxHistoryCount = value; 
-        }
-
-        public static string ErrorLogFilePath => ErrorHistoryManager.ErrorLogFilePath;
-        public static string PrevErrorLogFilePath => ErrorHistoryManager.PrevErrorLogFilePath;
-
-        public static void ClearHistory()
+        /// <summary>
+        /// 封装 enricher 和注册顺序，用于 SortedSet 排序
+        /// </summary>
+        internal readonly struct EnricherEntry(IErrorEnricher enricher, int insertionOrder)
         {
-            ErrorHistoryManager.ClearHistory();
-        }
+            public IErrorEnricher Enricher { get; } = enricher;
+            public int InsertionOrder { get; } = insertionOrder;
 
-        public static Dictionary<string, int> GetErrorStatsByMod()
-        {
-            return ErrorHistoryManager.GetErrorStatsByMod();
+            /// <summary>
+            /// 按 Priority 升序，相同优先级按注册顺序升序
+            /// </summary>
+            public class Comparer : IComparer<EnricherEntry>
+            {
+                public static readonly Comparer Instance = new();
+
+                public int Compare(EnricherEntry x, EnricherEntry y)
+                {
+                    int cmp = x.Enricher.Priority.CompareTo(y.Enricher.Priority);
+                    return cmp != 0 ? cmp : x.InsertionOrder.CompareTo(y.InsertionOrder);
+                }
+            }
         }
     }
 }

@@ -11,6 +11,9 @@ namespace BetterModSort.Core.ErrorAnalysis.Enrichers
     /// </summary>
     public class FilePathEnricher : IErrorEnricher
     {
+        public int Priority => 200;
+
+
         // 匹配 steamapps/workshop/content/{appId}/{workshopId}/ 中的 workshopId
         private static readonly Regex WorkshopPathRegex = new(
             @"steamapps[\\/]workshop[\\/]content[\\/]\d+[\\/](\d+)",

@@ -1,11 +1,12 @@
 using System.Text.RegularExpressions;
-using BetterModSort.Hooks;
 using BetterModSort.Tools;
 
 namespace BetterModSort.Core.ErrorAnalysis.Enrichers
 {
     public class CombatExtendedErrorEnricher : IErrorEnricher
     {
+        public int Priority => 80;
+
         // 匹配 "Trying to get stat XXX from YYY which has no support for Combat Extended." 中的 YYY
         private static readonly Regex CeStatRegex = new(
             @"from\s+(.*?)\s+which\s+has\s+no\s+support\s+for\s+Combat\s+Extended\.",

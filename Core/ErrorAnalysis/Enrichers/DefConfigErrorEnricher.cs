@@ -8,6 +8,8 @@ namespace BetterModSort.Core.ErrorAnalysis.Enrichers
 {
     public class DefConfigErrorEnricher : IErrorEnricher
     {
+        public int Priority => 50;
+
         public bool CanEnrich(string errorText)
         {
             return errorText.StartsWith("Config error in ") || errorText.StartsWith("Exception in ConfigErrors() of ");

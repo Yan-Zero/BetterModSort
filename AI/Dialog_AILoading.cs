@@ -1,9 +1,10 @@
-﻿using UnityEngine;
-using Verse;
-using BetterModSort.Tools;
-using RimWorld;
-using Newtonsoft.Json;
+﻿using BetterModSort.Core.ErrorAnalysis;
 using BetterModSort.Hooks;
+using BetterModSort.Tools;
+using Newtonsoft.Json;
+using RimWorld;
+using UnityEngine;
+using Verse;
 
 namespace BetterModSort.AI
 {
@@ -91,8 +92,8 @@ namespace BetterModSort.AI
             string errorLogContent = "";
             try
             {
-                if (System.IO.File.Exists(ErrorCaptureHook.ErrorLogFilePath))
-                    errorLogContent = System.IO.File.ReadAllText(ErrorCaptureHook.ErrorLogFilePath);
+                if (File.Exists(ErrorHistoryManager.ErrorLogFilePath))
+                    errorLogContent = File.ReadAllText(ErrorHistoryManager.ErrorLogFilePath);
             }
             catch { }
 
