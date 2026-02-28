@@ -7,7 +7,8 @@ namespace BetterModSort.Core.ErrorAnalysis
         public string? ErrorMessage { get; set; }
         public DateTime CapturedTime { get; set; }
         public string? StackTraceText { get; set; }
-        public List<ModDllInfo> RelatedMods { get; set; } = [];
+        public List<ModInfo> RelatedMods { get; set; } = [];
+        public IEnrichmentData? Enrichment { get; set; }
 
         public override string ToString()
         {

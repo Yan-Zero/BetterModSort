@@ -72,12 +72,23 @@ namespace BetterModSort
                 "BMS_Settings_EnableAISortingDesc".TranslateSafe());
             
 
-            listing.Label("BMS_Settings_LabelErrorLogMaxChars".TranslateSafe() + $": {Settings.ErrorLogMaxChars}");
-            Settings.ErrorLogMaxChars = (int)listing.Slider(Settings.ErrorLogMaxChars, 1000, 30000);
+            listing.Label("BMS_Settings_LabelErrorLogMaxChars".TranslateSafe());
+            string errorLogMaxStr = Settings.ErrorLogMaxChars.ToString();
+            errorLogMaxStr = listing.TextEntry(errorLogMaxStr);
+            if (int.TryParse(errorLogMaxStr, out int parsedErrMax) && parsedErrMax > 0)
+                Settings.ErrorLogMaxChars = parsedErrMax;
 
-            listing.Label("BMS_Settings_LabelShortDescMaxChars".TranslateSafe() + $": {Settings.ShortDescMaxChars}");
-            Settings.ShortDescMaxChars = (int)listing.Slider(Settings.ShortDescMaxChars, 500, 5000);
+            listing.Label("BMS_Settings_LabelShortDescMaxChars".TranslateSafe());
+            string shortDescMaxStr = Settings.ShortDescMaxChars.ToString();
+            shortDescMaxStr = listing.TextEntry(shortDescMaxStr);
+            if (int.TryParse(shortDescMaxStr, out int parsedDescMax) && parsedDescMax > 0)
+                Settings.ShortDescMaxChars = parsedDescMax;
 
+            listing.Label("BMS_Settings_LabelLLMTimeout".TranslateSafe());
+            string timeoutStr = Settings.LLMTimeoutSeconds.ToString();
+            timeoutStr = listing.TextEntry(timeoutStr);
+            if (int.TryParse(timeoutStr, out int parsedTimeout) && parsedTimeout > 0)
+                Settings.LLMTimeoutSeconds = parsedTimeout;
 
             listing.Gap();
 
@@ -87,6 +98,14 @@ namespace BetterModSort
 
             listing.CheckboxLabeled("BMS_Settings_EnableDebugDump".TranslateSafe(), ref Settings.EnableDebugDump,
                 "BMS_Settings_EnableDebugDumpDesc".TranslateSafe());
+
+            if (listing.ButtonText("BMS_Settings_OpenDumpFolder".TranslateSafe()))
+            {
+                string rootDir = System.IO.Path.Combine(GenFilePaths.SaveDataFolderPath, "BetterModSort");
+                if (!System.IO.Directory.Exists(rootDir))
+                    System.IO.Directory.CreateDirectory(rootDir);
+                System.Diagnostics.Process.Start("explorer.exe", rootDir);
+            }
 
             listing.End();
             base.DoSettingsWindowContents(inRect);

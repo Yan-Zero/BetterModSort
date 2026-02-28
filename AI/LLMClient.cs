@@ -63,58 +63,94 @@ namespace BetterModSort.AI
             // 使用 NullValueHandling.Ignore 忽略掉未设置的 response_format
             string payload = JsonConvert.SerializeObject(requestBody, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
 
-            // Debug Dump: 写出请求
-            DumpToFile("LLMRequest", payload);
-
             var requestMessage = new HttpRequestMessage(HttpMethod.Post, BaseUrl);
             requestMessage.Headers.Add("Authorization", $"Bearer {ApiKey}");
             requestMessage.Content = new StringContent(payload, Encoding.UTF8, "application/json");
 
+            _httpClient.Timeout = TimeSpan.FromSeconds(BetterModSortMod.Settings.LLMTimeoutSeconds);
+
             HttpResponseMessage response = await _httpClient.SendAsync(requestMessage);
             string responseString = await response.Content.ReadAsStringAsync();
 
-            // Debug Dump: 写出响应（无论成功与否都记录）
-            DumpToFile("LLMResponse", $"StatusCode: {response.StatusCode}\n\n{responseString}");
-
             if (!response.IsSuccessStatusCode)
+            {
+                DumpSummary(prompt, response.StatusCode.ToString(), null, null, responseString);
                 throw new Exception($"LLM 服务请求失败: {response.StatusCode}\n{responseString}");
+            }
 
             try
             {
                 var jsonResponse = JObject.Parse(responseString);
                 var content = jsonResponse["choices"]?[0]?["message"]?["content"]?.ToString();
-                
-                // Debug Dump: 写出提取到的 content 字段
-                if (content != null)
-                    DumpToFile("LLMContent", content);
-                
+                var usage = jsonResponse["usage"];
+
+                DumpSummary(prompt, response.StatusCode.ToString(), usage, content, null);
+
                 return content ?? responseString;
             }
             catch
             {
+                DumpSummary(prompt, response.StatusCode.ToString(), null, null, responseString);
                 return responseString;
             }
         }
 
         /// <summary>
-        /// 当 Debug Dump 开启时，将内容写入 SaveData/BetterModSort/ 目录下的对应文件
+        /// Dump 目录路径
         /// </summary>
-        private static void DumpToFile(string fileLabel, string content)
+        public static string DumpDir =>
+            System.IO.Path.Combine(GenFilePaths.SaveDataFolderPath, "BetterModSort", "Dump");
+
+        /// <summary>
+        /// 当 Debug Dump 开启时，将关键摘要写入 Dump/ 子目录
+        /// </summary>
+        private static void DumpSummary(string prompt, string statusCode, JToken? usage, string? content, string? errorBody)
         {
             try
             {
                 if (!BetterModSortMod.Settings.EnableDebugDump) return;
 
-                string dir = System.IO.Path.Combine(GenFilePaths.SaveDataFolderPath, "BetterModSort");
-                if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
+                if (!System.IO.Directory.Exists(DumpDir))
+                    System.IO.Directory.CreateDirectory(DumpDir);
 
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                string filePath = System.IO.Path.Combine(dir, $"{fileLabel}_{timestamp}.txt");
-                System.IO.File.WriteAllText(filePath, content);
+                string filePath = System.IO.Path.Combine(DumpDir, $"LLM_{timestamp}.txt");
+
+                var sb = new StringBuilder();
+                sb.AppendLine($"Time: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                sb.AppendLine($"Model: {ModelName}");
+                sb.AppendLine($"Status: {statusCode}");
+                sb.AppendLine($"Prompt Length: {prompt?.Length ?? 0} chars");
+
+                if (usage != null)
+                {
+                    sb.AppendLine($"Tokens — prompt: {usage["prompt_tokens"]}, completion: {usage["completion_tokens"]}, total: {usage["total_tokens"]}");
+                }
+
+                sb.AppendLine();
+                sb.AppendLine("=== Prompt ===");
+                sb.AppendLine(prompt ?? "");
+                sb.AppendLine();
+
+                sb.AppendLine();
+
+                if (content != null)
+                {
+                    sb.AppendLine("=== LLM Response Content ===");
+                    sb.AppendLine(content);
+                }
+                else if (errorBody != null)
+                {
+                    sb.AppendLine("=== Error Response ===");
+                    string truncated = errorBody.Length > 500 ? errorBody[..500] + "..." : errorBody;
+                    sb.AppendLine(truncated);
+                }
+
+                System.IO.File.WriteAllText(filePath, sb.ToString());
             }
             catch (Exception ex)
             {
-                Log.Warning("[BetterModSort] " + "BMS_Log_DebugDumpWriteFailed".TranslateSafe(fileLabel, ex.Message));
+                Log.Warning("[BetterModSort] " + "BMS_Log_DebugDumpWriteFailed".TranslateSafe("LLM", ex.Message));
             }
         }
     }

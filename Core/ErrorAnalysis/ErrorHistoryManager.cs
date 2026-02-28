@@ -52,7 +52,7 @@ namespace BetterModSort.Core.ErrorAnalysis
             return false;
         }
 
-        public static void RecordError(CapturedErrorInfo capturedInfo, bool isEnriched)
+        public static void RecordError(CapturedErrorInfo capturedInfo)
         {
             ErrorHistory.Add(capturedInfo);
             if (ErrorHistory.Count > MaxHistoryCount)
@@ -64,16 +64,39 @@ namespace BetterModSort.Core.ErrorAnalysis
             try
             {
                 string textToWrite;
-                if (isEnriched || capturedInfo.RelatedMods == null || capturedInfo.RelatedMods.Count == 0)
-                    textToWrite = $"[{capturedInfo.CapturedTime:yyyy-MM-dd HH:mm:ss}]\n{TrimEnrichedMessage(capturedInfo.ErrorMessage ?? "")}\n\n";
+                if (capturedInfo.Enrichment != null)
+                    // enrichment 数据对象自己决定如何生成精简的文件日志
+                    textToWrite = $"[{capturedInfo.CapturedTime:yyyy-MM-dd HH:mm:ss}]\n{capturedInfo.Enrichment.FormatForFile()}\n\n";
+                else if (capturedInfo.RelatedMods != null && capturedInfo.RelatedMods.Count > 0)
+                    // 非 enriched 但有 DLL 堆栈分析结果，生成精简格式
+                    textToWrite = GenerateCompactFileOutput(capturedInfo);
                 else
-                    textToWrite = GenerateAnalysisOutput(capturedInfo) + "\n" + "BMS_Error_RawStackHeader".TranslateSafe() + "\n" + capturedInfo.ErrorMessage + "\n\n";
+                    // 无任何分析结果，直接记录原始文本
+                    textToWrite = $"[{capturedInfo.CapturedTime:yyyy-MM-dd HH:mm:ss}]\n{TruncateString(capturedInfo.ErrorMessage ?? "", 200)}\n\n";
                 File.AppendAllText(ErrorLogFilePath, textToWrite);
             }
             catch { }
 
-            if (EnableDebugOutput && !isEnriched && capturedInfo.RelatedMods != null && capturedInfo.RelatedMods.Count > 0)
+            if (EnableDebugOutput && capturedInfo.Enrichment == null && capturedInfo.RelatedMods != null && capturedInfo.RelatedMods.Count > 0)
                 OutputErrorAnalysis(capturedInfo);
+        }
+
+        /// <summary>
+        /// 精简的文件输出格式（非 enriched 错误，有 DLL 堆栈分析结果时）
+        /// </summary>
+        private static string GenerateCompactFileOutput(CapturedErrorInfo info)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"[{info.CapturedTime:yyyy-MM-dd HH:mm:ss}]");
+            sb.AppendLine(TruncateString(info.ErrorMessage ?? "", 200));
+            foreach (var mod in info.RelatedMods)
+            {
+                string location = !string.IsNullOrEmpty(mod.LocationContext) ? $" | {mod.LocationContext}" : "";
+                string dll = !string.IsNullOrEmpty(mod.DllName) ? $" DLL:{mod.DllName}" : "";
+                sb.AppendLine($"  -> [{mod.PackageId}] {mod.ModName}{dll}{location}");
+            }
+            sb.AppendLine();
+            return sb.ToString();
         }
 
         public static string GenerateAnalysisOutput(CapturedErrorInfo info)
@@ -86,10 +109,11 @@ namespace BetterModSort.Core.ErrorAnalysis
             foreach (var mod in info.RelatedMods)
             {
                 output += $"  - [{mod.PackageId}] {mod.ModName}\n";
-                output += $"    DLL: {mod.DllName}\n";
-                if (!string.IsNullOrEmpty(mod.StackFrameInfo))
+                if (!string.IsNullOrEmpty(mod.DllName))
+                    output += $"    DLL: {mod.DllName}\n";
+                if (!string.IsNullOrEmpty(mod.LocationContext))
                 {
-                    output += $"    {"BMS_Error_Location".TranslateSafe()}: {mod.StackFrameInfo}\n";
+                    output += $"    {"BMS_Error_Location".TranslateSafe()}: {mod.LocationContext}\n";
                 }
             }
 
@@ -109,56 +133,6 @@ namespace BetterModSort.Core.ErrorAnalysis
             int len = maxLength;
             if (char.IsHighSurrogate(str[len - 1])) len--;
             return str[..len] + "...";
-        }
-
-        /// <summary>
-        /// 对 enriched 的错误文本做智能瘦身，仅用于写入文件（不影响内存和控制台）。
-        /// 截断 XML Context 块和 Unity 堆栈，保留 enricher 注入的元数据。
-        /// </summary>
-        private static string TrimEnrichedMessage(string message)
-        {
-            if (string.IsNullOrEmpty(message)) return message;
-
-            var lines = message.Split('\n');
-            var sb = new StringBuilder();
-            int stackLineCount = 0;
-
-            foreach (var line in lines)
-            {
-                var trimmed = line.TrimStart();
-
-                // 截断 XML Context: 后的内容（保留前 200 字符）
-                int ctxIdx = line.IndexOf("Context: <", StringComparison.Ordinal);
-                if (ctxIdx >= 0)
-                {
-                    string beforeCtx = line.Substring(0, ctxIdx + "Context: ".Length);
-                    string ctxContent = line.Substring(ctxIdx + "Context: ".Length);
-                    if (ctxContent.Length > 200)
-                        ctxContent = ctxContent.Substring(0, 200) + "...(truncated)";
-                    sb.AppendLine(beforeCtx + ctxContent);
-                    continue;
-                }
-
-                // 限制 Unity/Mono 堆栈行数（以 "at " 开头的行只保留前 3 行）
-                if (trimmed.StartsWith("at ", StringComparison.Ordinal))
-                {
-                    stackLineCount++;
-                    if (stackLineCount > 3)
-                    {
-                        if (stackLineCount == 4)
-                            sb.AppendLine("  ... (stack trace truncated)");
-                        continue;
-                    }
-                }
-                else
-                {
-                    stackLineCount = 0;
-                }
-
-                sb.AppendLine(line);
-            }
-
-            return sb.ToString().TrimEnd();
         }
 
         public static void ClearHistory()

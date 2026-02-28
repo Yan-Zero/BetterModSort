@@ -41,7 +41,7 @@ namespace BetterModSort.Hooks
         public static bool Prefix(ref Dictionary<string, string> __result)
         {
             var dictionary = new Dictionary<string, string>();
-            List<ModMetaData> mods = ModsConfig.ActiveModsInLoadOrder.ToList();
+            List<ModMetaData> mods = [.. ModsConfig.ActiveModsInLoadOrder];
 
             for (int i = 0; i < mods.Count; i++)
             {
@@ -87,9 +87,9 @@ namespace BetterModSort.Hooks
 
         private static List<string> MergeLists(List<string> a, List<string> b)
         {
-            if (a == null || a.Count == 0) return b ?? new List<string>();
+            if (a == null || a.Count == 0) return b ?? [];
             if (b == null || b.Count == 0) return a;
-            return a.Concat(b).ToList();
+            return [.. a, .. b];
         }
 
         private static void OutputDuplicateModWarning(string packageId, List<ModMetaData> allMods)

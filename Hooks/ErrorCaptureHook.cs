@@ -10,6 +10,7 @@ namespace BetterModSort.Hooks
     {
         private static int _insertionCounter = 0;
 
+        private static readonly HashSet<Type> _registeredTypes = [];
         private static readonly SortedSet<EnricherEntry> _enricherSet = new(EnricherEntry.Comparer.Instance);
 
         static ErrorCaptureHook()
@@ -23,34 +24,60 @@ namespace BetterModSort.Hooks
         public static void RegisterEnricher(IErrorEnricher enricher)
         {
             if (enricher == null) return;
-            // 避免重复注册同类型
-            foreach (var entry in _enricherSet)
-                if (entry.Enricher.GetType() == enricher.GetType())
-                    return;
+            if (!_registeredTypes.Add(enricher.GetType())) return;
             _enricherSet.Add(new EnricherEntry(enricher, _insertionCounter++));
         }
 
-        public static string? TryEnrichErrorText(string text)
+        /// <summary>
+        /// 遍历所有 enricher，对第一个匹配的调用 Collect()，返回收集到的数据对象。
+        /// </summary>
+        public static IEnrichmentData? TryCollectEnrichment(string text)
         {
             if (string.IsNullOrEmpty(text)) return null;
 
             foreach (var entry in _enricherSet)
-                if (entry.Enricher.CanEnrich(text))
-                    return entry.Enricher.Enrich(text);
+            {
+                if (!entry.Enricher.CanEnrich(text)) continue;
+                var data = entry.Enricher.Collect(text);
+                if (data != null) return data;
+            }
             return null;
         }
 
-        public static void OnErrorCaptured(string errorText, Exception? exception, bool isEnriched)
+        public static void OnErrorCaptured(string errorText, Exception? exception, IEnrichmentData? enrichment)
         {
             if (ErrorHistoryManager.IsDuplicate(errorText))
                 return;
 
             var stackTrace = new StackTrace(true);
             var capturedInfo = ErrorAnalyzer.AnalyzeError(errorText ?? "", stackTrace, exception);
+            capturedInfo.Enrichment = enrichment;
 
-            ErrorHistoryManager.RecordError(capturedInfo, isEnriched);
+            // 将 enrichment 识别到的 MOD 合并到 RelatedMods
+            if (enrichment != null)
+            {
+                var existingIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var m in capturedInfo.RelatedMods)
+                    existingIds.Add(m.PackageId);
+
+                foreach (var mod in enrichment.GetInvolvedMods())
+                {
+                    if (mod != null && !existingIds.Contains(mod.PackageId))
+                    {
+                        existingIds.Add(mod.PackageId);
+                        capturedInfo.RelatedMods.Add(new Tools.ModInfo
+                        {
+                            ModContentPack = mod,
+                            PackageId = mod.PackageId,
+                            ModName = mod.Name
+                        });
+                    }
+                }
+            }
+
+            ErrorHistoryManager.RecordError(capturedInfo);
         }
-        
+
         /// <summary>
         /// 封装 enricher 和注册顺序，用于 SortedSet 排序
         /// </summary>

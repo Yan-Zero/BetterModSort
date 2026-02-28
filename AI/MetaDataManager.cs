@@ -91,7 +91,7 @@ namespace BetterModSort.AI
         /// 当捕获到报错并分析出相关 MOD 后调用，将新的嫌疑 PackageId 追加到 meta 文件。
         /// 内部 HashSet 保证同一进程内不重复写入。
         /// </summary>
-        public static void AppendSuspectMods(IEnumerable<ModDllInfo> relatedMods)
+        public static void AppendSuspectMods(IEnumerable<ModInfo> relatedMods)
         {
             if (relatedMods == null) return;
             try

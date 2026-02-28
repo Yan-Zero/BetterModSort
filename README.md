@@ -112,10 +112,14 @@ Could not resolve cross-reference to Verse.WorkTypeDef named DoctorRescue (wante
 ### 实验性功能
 
 - **启用 AI 辅助排序** — 勾上之后「自动排序」按钮会走 AI 流程，默认关闭
+- **发送给 AI 的报错日志最大字符数** — 限制报错内容的长度，防止单个庞大报错占满上下文（默认 8000）
+- **提炼短描述时截取原始描述的最大字符数** — 限制提取描述时的长度，节省 Token（默认 2500）
+- **LLM 请求超时时间（秒）** — 设置单次请求的最大等待时间（默认 600 秒）
 
 ### 调试选项
 
-- **启用 Debug Dump** — 把每次 LLM 通信的完整请求和响应写到文件里，方便排查问题。文件在 `%LOCALAPPDATA%Low/Ludeon Studios/RimWorld by Ludeon Studios/BetterModSort/` 下面
+- **启用 Debug Dump** — 把每次 LLM 通信的关键摘要信息写到文件里，方便排查提示词带来的影响。文件在 `%LOCALAPPDATA%Low/Ludeon Studios/RimWorld by Ludeon Studios/BetterModSort/Dump/` 下面
+- **打开数据文件夹** — 在游戏内点击可以直接通过资源管理器打开 MOD 的数据存放目录，包含 `Dump`（LLM 通信总结日志）、`ShortDesc`（AI 提炼的 Mod Desc 摘要缓存）以及 `BetterModSort.Error.txt`（报错分析记录文件）。
 
 ---
 
@@ -140,7 +144,13 @@ BetterModSort/
 │   ├── MetaDataManager.cs     # 嫌疑 MOD 名单 & 短描述缓存的持久化
 │   └── PromptBuilder.cs       # 构建各类 Prompt
 ├── Core/
-│   └── ErrorAnalysis/         # 错误分析核心与丰富化策略库 (各种 Enricher)
+│   └── ErrorAnalysis/         # 错误分析核心
+│       ├── Enrichers/         # 各种具体的错误类型处理器 (XML, CE, DefConfig等)
+│       ├── CapturedErrorInfo.cs
+│       ├── ErrorAnalyzer.cs
+│       ├── ErrorHistoryManager.cs
+│       ├── IEnrichmentData.cs # Enrichment 数据统一接口
+│       └── IErrorEnricher.cs  # Enricher 统一接口
 ├── Hooks/
 │   ├── ErrorCaptureHook.cs    # 错误发生时的拦截入口
 │   ├── LogPatch.cs            # Hook Log.Error / ErrorOnce
@@ -148,8 +158,9 @@ BetterModSort/
 │   └── XmlSource.cs           # Hook 游戏资源加载以建立追踪
 ├── Tools/
 │   ├── DllLookupTool.cs       # DLL ↔ MOD 映射
-│   ├── I18n.cs                # 早期多语言加载（Harmony 初始化时游戏语言系统还没好）
-│   └── XmlSourceMap.cs        # Def/Patch 的来源追踪储存字典 (从原 XmlSource 剥离)
+│   ├── I18n.cs                # 早期多语言加载
+│   ├── ModInfo.cs             # 统一的 MOD 信息实体
+│   └── XmlSourceMap.cs        # Def/Patch 的来源追踪储存字典
 ├── BetterModSortMod.cs        # MOD 入口
 └── BetterModSortSettings.cs   # 设置定义
 ```

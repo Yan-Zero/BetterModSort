@@ -19,33 +19,24 @@ namespace BetterModSort.Core.ErrorAnalysis.Enrichers
             return errorText.StartsWith("Could not resolve cross-reference to");
         }
 
-        public string? Enrich(string errorText)
+        public IEnrichmentData? Collect(string errorText)
         {
-            // 格式: "Could not resolve cross-reference to Verse.WorkTypeDef named DoctorRescue ..."
             const string namedMarker = " named ";
             int namedIdx = errorText.IndexOf(namedMarker, StringComparison.Ordinal);
-            if (namedIdx < 0) return errorText;
+            if (namedIdx < 0) return null;
 
             int defNameStart = namedIdx + namedMarker.Length;
-            // defName 以空格、换行或字符串结尾为止
             int defNameEnd = errorText.IndexOfAny([' ', '\n', '\r'], defNameStart);
             if (defNameEnd < 0) defNameEnd = errorText.Length;
 
             string defName = errorText[defNameStart..defNameEnd].Trim();
-            if (string.IsNullOrEmpty(defName)) return errorText;
+            if (string.IsNullOrEmpty(defName)) return null;
 
-            var sb = new StringBuilder();
-            sb.AppendLine(errorText);
+            var usages = new List<CrossRefUsage>();
+            var patches = new List<CrossRefPatch>();
 
-            bool hasAnyInfo = false;
-
-            // 1) 在 XmlBuckets 中查找引用了该 defName 的 XML 节点
             if (XmlBuckets.ByDefName.TryGetValue(defName, out var bag) && !bag.IsEmpty)
             {
-                hasAnyInfo = true;
-                string crossRefLabel = "BMS_Error_CrossRefUsedIn".TranslateSafe();
-                sb.AppendLine($"  -> [{crossRefLabel}: {defName}]");
-
                 foreach (var node in bag)
                 {
                     var (rootDefType, rootDefName) = GetRootDefInfo(node);
@@ -55,47 +46,32 @@ namespace BetterModSort.Core.ErrorAnalysis.Enrichers
                         ? DefSourceMap.GetAsset(rootDefType!, rootDefName!)
                         : null;
 
-                    if (sourceAsset != null)
-                    {
-                        var mod = sourceAsset.mod;
-                        string modName = mod?.Name ?? "(unknown)";
-                        string pkgId = mod?.PackageIdPlayerFacing ?? mod?.PackageId ?? "";
-                        string file = sourceAsset.FullFilePath ?? sourceAsset.name ?? "";
-                        sb.AppendLine($"     - [Mod: {modName} ({pkgId})] {nodePath}");
-                        if (!string.IsNullOrEmpty(file))
-                            sb.AppendLine($"       File: {file}");
-                    }
-                    else
-                        sb.AppendLine($"     - {nodePath}");
+                    usages.Add(new CrossRefUsage(
+                        sourceAsset?.mod,
+                        sourceAsset?.FullFilePath ?? sourceAsset?.name,
+                        nodePath));
 
-                    // 2) 在 PatchSourceMap 中查找可能修改了该 Def 的 Patch
-                    var patches = PatchSourceMap.Get(rootDefName ?? "")
+                    var patchList = PatchSourceMap.Get(rootDefName ?? "")
                         .Where(p => PatchValueContainsDefName(p.Operation, defName))
                         .GroupBy(p => (p.Mod?.PackageId ?? "", p.Operation?.GetType().Name ?? ""))
                         .Select(g => g.First())
                         .ToList();
-                        
-                    if (patches.Count > 0)
+
+                    foreach (var patchInfo in patchList)
                     {
-                        hasAnyInfo = true;
-                        string patchLabel2 = "BMS_Error_PatchInvolving".TranslateSafe();
-                        sb.AppendLine($"  -> [{patchLabel2}: {rootDefName ?? ""}]");
-                        foreach (var patchInfo in patches)
-                        {
-                            var patchMod = patchInfo.Mod;
-                            string patchModName = patchMod?.Name ?? "(unknown)";
-                            string patchPkgId = patchMod?.PackageIdPlayerFacing ?? patchMod?.PackageId ?? "";
-                            string opType = patchInfo.Operation?.GetType().Name ?? "PatchOperation";
-                            string findModInfo = !string.IsNullOrEmpty(patchInfo.FindModTarget)
-                                ? $" (FindMod: {patchInfo.FindModTarget})"
-                                : "";
-                            sb.AppendLine($"     - [Mod: {patchModName} ({patchPkgId})] {opType}{findModInfo}");
-                        }
+                        patches.Add(new CrossRefPatch(
+                            rootDefName ?? "",
+                            patchInfo.Mod,
+                            patchInfo.Operation?.GetType().Name ?? "PatchOperation",
+                            patchInfo.FindModTarget));
                     }
                 }
             }
 
-            return hasAnyInfo ? sb.ToString().TrimEnd() : errorText;
+            if (usages.Count == 0 && patches.Count == 0)
+                return null;
+
+            return new CrossRefEnrichmentData(defName, usages, patches, errorText);
         }
 
         private static (string? defType, string? defName) GetRootDefInfo(XmlNode node)
@@ -171,6 +147,127 @@ namespace BetterModSort.Core.ErrorAnalysis.Enrichers
                 return propNode.OuterXml;
 
             return value.ToString();
+        }
+    }
+
+    public class CrossRefUsage
+    {
+        public ModContentPack? Mod { get; }
+        public string? FilePath { get; }
+        public string NodePath { get; }
+        public CrossRefUsage(ModContentPack? mod, string? filePath, string nodePath)
+        {
+            Mod = mod;
+            FilePath = filePath;
+            NodePath = nodePath;
+        }
+    }
+
+    public class CrossRefPatch
+    {
+        public string TargetDefName { get; }
+        public ModContentPack? Mod { get; }
+        public string OpType { get; }
+        public string? FindModTarget { get; }
+        public CrossRefPatch(string targetDefName, ModContentPack? mod, string opType, string? findModTarget)
+        {
+            TargetDefName = targetDefName;
+            Mod = mod;
+            OpType = opType;
+            FindModTarget = findModTarget;
+        }
+    }
+
+    public class CrossRefEnrichmentData(
+        string targetDefName,
+        List<CrossRefUsage> usages,
+        List<CrossRefPatch> patches,
+        string originalErrorText) : IEnrichmentData
+    {
+        public string TargetDefName { get; } = targetDefName;
+        public List<CrossRefUsage> Usages { get; } = usages;
+        public List<CrossRefPatch> Patches { get; } = patches;
+        public string OriginalErrorText { get; } = originalErrorText;
+
+        public IEnumerable<ModContentPack> GetInvolvedMods()
+        {
+            foreach (var u in Usages)
+                if (u.Mod != null) yield return u.Mod;
+            foreach (var p in Patches)
+                if (p.Mod != null) yield return p.Mod;
+        }
+
+        public string FormatForConsole()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine(OriginalErrorText);
+
+            if (Usages.Count > 0)
+            {
+                string crossRefLabel = "BMS_Error_CrossRefUsedIn".TranslateSafe();
+                sb.AppendLine($"  -> [{crossRefLabel}: {TargetDefName}]");
+
+                foreach (var usage in Usages)
+                {
+                    if (usage.Mod != null)
+                    {
+                        string modName = usage.Mod.Name ?? "(unknown)";
+                        string pkgId = usage.Mod.PackageIdPlayerFacing ?? usage.Mod.PackageId ?? "";
+                        sb.AppendLine($"     - [Mod: {modName} ({pkgId})] {usage.NodePath}");
+                        if (!string.IsNullOrEmpty(usage.FilePath))
+                            sb.AppendLine($"       File: {usage.FilePath}");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"     - {usage.NodePath}");
+                    }
+                }
+            }
+
+            if (Patches.Count > 0)
+            {
+                string patchLabel = "BMS_Error_PatchInvolving".TranslateSafe();
+                sb.AppendLine($"  -> [{patchLabel}: {TargetDefName}]");
+                foreach (var patch in Patches)
+                {
+                    string patchModName = patch.Mod?.Name ?? "(unknown)";
+                    string patchPkgId = patch.Mod?.PackageIdPlayerFacing ?? patch.Mod?.PackageId ?? "";
+                    string findModInfo = !string.IsNullOrEmpty(patch.FindModTarget)
+                        ? $" (FindMod: {patch.FindModTarget})"
+                        : "";
+                    sb.AppendLine($"     - [Mod: {patchModName} ({patchPkgId})] {patch.OpType}{findModInfo}");
+                }
+            }
+
+            return sb.ToString().TrimEnd();
+        }
+
+        public string FormatForFile()
+        {
+            var sb = new StringBuilder();
+
+            string summary = OriginalErrorText.Length > 100
+                ? OriginalErrorText[..100] + "..."
+                : OriginalErrorText;
+            sb.AppendLine($"[Cross-Reference Not Found] {summary}");
+
+            // 使用位置
+            foreach (var usage in Usages)
+            {
+                string mod = usage.Mod?.Name ?? "?";
+                string pkg = usage.Mod?.PackageIdPlayerFacing ?? usage.Mod?.PackageId ?? "";
+                sb.AppendLine($"  UsedIn: {mod} ({pkg}) | {usage.NodePath}");
+            }
+
+            // Patch
+            foreach (var patch in Patches)
+            {
+                string mod = patch.Mod?.Name ?? "?";
+                string pkg = patch.Mod?.PackageIdPlayerFacing ?? patch.Mod?.PackageId ?? "";
+                sb.AppendLine($"  Patch: {mod} ({pkg}) {patch.OpType}");
+            }
+
+            return sb.ToString().TrimEnd();
         }
     }
 }

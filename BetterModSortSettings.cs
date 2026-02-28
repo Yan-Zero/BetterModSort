@@ -28,6 +28,11 @@ namespace BetterModSort
         /// </summary>
         public int ShortDescMaxChars = 2500;
 
+        /// <summary>
+        /// LLM 请求超时时间（秒）
+        /// </summary>
+        public int LLMTimeoutSeconds = 600;
+
         public override void ExposeData()
         {
             Scribe_Values.Look(ref ApiKey, "ApiKey", "");
@@ -37,6 +42,7 @@ namespace BetterModSort
             Scribe_Values.Look(ref EnableDebugDump, "EnableDebugDump", false);
             Scribe_Values.Look(ref ErrorLogMaxChars, "ErrorLogMaxChars", 8000);
             Scribe_Values.Look(ref ShortDescMaxChars, "ShortDescMaxChars", 2500);
+            Scribe_Values.Look(ref LLMTimeoutSeconds, "LLMTimeoutSeconds", 600);
             base.ExposeData();
         }
     }

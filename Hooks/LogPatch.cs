@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using BetterModSort.Core.ErrorAnalysis;
+using HarmonyLib;
 using Verse;
 
 namespace BetterModSort.Hooks
@@ -9,22 +10,22 @@ namespace BetterModSort.Hooks
     [HarmonyPatch(typeof(Log), "ErrorOnce")]
     public static class Log_ErrorOnce_Patch
     {
-        public static void Prefix(ref string text, out bool __state)
+        public static void Prefix(ref string text, out IEnrichmentData? __state)
         {
-            __state = false;
+            __state = null;
             try
             {
-                var enriched = ErrorCaptureHook.TryEnrichErrorText(text);
-                if (enriched != null)
+                var data = ErrorCaptureHook.TryCollectEnrichment(text);
+                if (data != null)
                 {
-                    text = enriched;
-                    __state = true;
+                    __state = data;
+                    text = data.FormatForConsole();
                 }
             }
             catch { }
         }
 
-        public static void Postfix(string text, bool __state)
+        public static void Postfix(string text, IEnrichmentData? __state)
         {
             try { ErrorCaptureHook.OnErrorCaptured(text, null, __state); }
             catch { }
@@ -37,22 +38,22 @@ namespace BetterModSort.Hooks
     [HarmonyPatch(typeof(Log), nameof(Log.Error))]
     public static class Log_Error_Patch
     {
-        public static void Prefix(ref string text, out bool __state)
+        public static void Prefix(ref string text, out IEnrichmentData? __state)
         {
-            __state = false;
+            __state = null;
             try
             {
-                var enriched = ErrorCaptureHook.TryEnrichErrorText(text);
-                if (enriched != null)
+                var data = ErrorCaptureHook.TryCollectEnrichment(text);
+                if (data != null)
                 {
-                    text = enriched;
-                    __state = true;
+                    __state = data;
+                    text = data.FormatForConsole();
                 }
             }
             catch { }
         }
 
-        public static void Postfix(string text, bool __state)
+        public static void Postfix(string text, IEnrichmentData? __state)
         {
             try { ErrorCaptureHook.OnErrorCaptured(text, null, __state); }
             catch { }

@@ -12,8 +12,10 @@
   <BMS_Settings_LabelErrorLogMaxChars>Макс. символов журнала ошибок для AI</BMS_Settings_LabelErrorLogMaxChars>
   <BMS_Settings_LabelShortDescMaxChars>Макс. символов описания для извлечения сводки</BMS_Settings_LabelShortDescMaxChars>
   <BMS_Settings_SectionDebug>── Опции отладки ──</BMS_Settings_SectionDebug>
-  <BMS_Settings_EnableDebugDump>Включить дамп отладки (запись запросов/ответов LLM в файлы)</BMS_Settings_EnableDebugDump>
-  <BMS_Settings_EnableDebugDumpDesc>Если включено, полный текст запроса (Prompt) и ответа каждого вызова LLM будет записываться в файлы в директории %LOCALAPPDATA%Low/Ludeon Studios/RimWorld by Ludeon Studios/BetterModSort/.</BMS_Settings_EnableDebugDumpDesc>
+  <BMS_Settings_EnableDebugDump>Включить дамп отладки (запись ключевой информации LLM в файлы)</BMS_Settings_EnableDebugDump>
+  <BMS_Settings_EnableDebugDumpDesc>Если включено, сводка каждого вызова LLM (модель, использование токенов, содержание ответа) будет записываться в файлы в подкаталоге Dump.</BMS_Settings_EnableDebugDumpDesc>
+  <BMS_Settings_OpenDumpFolder>Открыть папку данных</BMS_Settings_OpenDumpFolder>
+  <BMS_Settings_LabelLLMTimeout>Тайм-аут запроса LLM (сек):</BMS_Settings_LabelLLMTimeout>
 
   <!-- ========== AI Loading Dialog ========== -->
   <BMS_AILoading_AnalyzingDesc>Анализ и извлечение краткого описания для {0}...</BMS_AILoading_AnalyzingDesc>

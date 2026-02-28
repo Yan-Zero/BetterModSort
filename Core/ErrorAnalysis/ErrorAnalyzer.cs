@@ -17,7 +17,7 @@ namespace BetterModSort.Core.ErrorAnalysis
                 StackTraceText = stackTrace.ToString()
             };
 
-            var analyzedMods = new Dictionary<string, ModDllInfo>();
+            var analyzedMods = new Dictionary<string, ModInfo>();
 
             foreach (var frame in stackTrace.GetFrames() ?? [])
             {
@@ -35,7 +35,7 @@ namespace BetterModSort.Core.ErrorAnalysis
                 var modInfo = DllLookupTool.GetModFromAssembly(assembly);
                 if (modInfo != null && !analyzedMods.ContainsKey(modInfo.PackageId))
                 {
-                    modInfo.StackFrameInfo = $"{method.DeclaringType.FullName}.{method.Name}";
+                    modInfo.LocationContext = $"{method.DeclaringType.FullName}.{method.Name}";
                     analyzedMods[modInfo.PackageId] = modInfo;
                 }
             }

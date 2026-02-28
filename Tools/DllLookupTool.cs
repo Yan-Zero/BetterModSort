@@ -39,10 +39,10 @@ namespace BetterModSort.Tools
         /// <summary>
         /// 根据异常获取对应的 MOD 信息
         /// </summary>
-        public static List<ModDllInfo> GetModsFromException(Exception ex)
+        public static List<ModInfo> GetModsFromException(Exception ex)
         {
             EnsureCache();
-            var results = new List<ModDllInfo>();
+            var results = new List<ModInfo>();
             var stackTrace = new StackTrace(ex, true);
 
             foreach (var frame in stackTrace.GetFrames() ?? [])
@@ -51,7 +51,7 @@ namespace BetterModSort.Tools
                 var modInfo = GetModFromAssembly(method.DeclaringType.Assembly);
                 if (modInfo != null && !results.Any(r => r.PackageId == modInfo.PackageId))
                 {
-                    modInfo.StackFrameInfo = $"{method.DeclaringType?.FullName}.{method.Name}";
+                    modInfo.LocationContext = $"{method.DeclaringType?.FullName}.{method.Name}";
                     results.Add(modInfo);
                 }
             }
@@ -61,31 +61,31 @@ namespace BetterModSort.Tools
         /// <summary>
         /// 根据 Assembly 获取对应的 MOD
         /// </summary>
-        public static ModDllInfo? GetModFromAssembly(Assembly assembly)
+        public static ModInfo? GetModFromAssembly(Assembly assembly)
         {
             EnsureCache();
 
             // 优先直接查找 Assembly 对象
             if (_assemblyToModCache.TryGetValue(assembly, out var mod))
-                return CreateModDllInfo(mod, assembly);
+                return CreateModInfo(mod, assembly);
             // 回退到按名称查找
             var assemblyName = assembly.GetName().Name;
             if (_assemblyNameToModCache.TryGetValue(assemblyName, out mod))
-                return CreateModDllInfo(mod, assembly);
+                return CreateModInfo(mod, assembly);
             return null;
         }
 
         /// <summary>
         /// 根据 DLL 名称查找对应的 MOD
         /// </summary>
-        public static ModDllInfo? GetModFromDllName(string dllName)
+        public static ModInfo? GetModFromDllName(string dllName)
         {
             EnsureCache();
 
             var cleanName = Path.GetFileNameWithoutExtension(dllName);
             if (_assemblyNameToModCache.TryGetValue(cleanName, out var mod))
             {
-                return new ModDllInfo
+                return new ModInfo
                 {
                     ModContentPack = mod,
                     PackageId = mod.PackageId,
@@ -100,10 +100,10 @@ namespace BetterModSort.Tools
         /// <summary>
         /// 获取所有已加载 MOD 的 DLL 信息
         /// </summary>
-        public static List<ModDllInfo> GetAllModDllMappings()
+        public static List<ModInfo> GetAllModDllMappings()
         {
             EnsureCache();
-            var results = new List<ModDllInfo>();
+            var results = new List<ModInfo>();
 
             foreach (var mod in LoadedModManager.RunningModsListForReading)
             {
@@ -111,7 +111,7 @@ namespace BetterModSort.Tools
 
                 foreach (var assembly in mod.assemblies.loadedAssemblies)
                 {
-                    results.Add(CreateModDllInfo(mod, assembly));
+                    results.Add(CreateModInfo(mod, assembly));
                 }
             }
 
@@ -121,10 +121,10 @@ namespace BetterModSort.Tools
         /// <summary>
         /// 分析错误日志字符串，提取可能的 MOD 信息
         /// </summary>
-        public static List<ModDllInfo> AnalyzeErrorLog(string errorLog)
+        public static List<ModInfo> AnalyzeErrorLog(string errorLog)
         {
             EnsureCache();
-            var results = new List<ModDllInfo>();
+            var results = new List<ModInfo>();
 
             foreach (var kvp in _assemblyNameToModCache)
             {
@@ -133,7 +133,7 @@ namespace BetterModSort.Tools
                     var mod = kvp.Value;
                     if (!results.Any(r => r.PackageId == mod.PackageId))
                     {
-                        results.Add(new ModDllInfo
+                        results.Add(new ModInfo
                         {
                             ModContentPack = mod,
                             PackageId = mod.PackageId,
@@ -155,9 +155,9 @@ namespace BetterModSort.Tools
             return mod.assemblies?.loadedAssemblies?.ToList() ?? new List<Assembly>();
         }
 
-        private static ModDllInfo CreateModDllInfo(ModContentPack mod, Assembly assembly)
+        private static ModInfo CreateModInfo(ModContentPack mod, Assembly assembly)
         {
-            return new ModDllInfo
+            return new ModInfo
             {
                 ModContentPack = mod,
                 PackageId = mod.PackageId,
@@ -173,33 +173,5 @@ namespace BetterModSort.Tools
                 BuildCache();
         }
     }
-
-    public class ModDllInfo
-    {
-        public ModContentPack? ModContentPack { get; set; }
-        public string PackageId { get; set; }
-        public string ModName { get; set; }
-        public string DllName { get; set; }
-        public string DllPath { get; set; }
-        public string StackFrameInfo { get; set; }
-
-        public ModDllInfo()
-        {
-            PackageId = string.Empty;
-            ModName = string.Empty;
-            DllName = string.Empty;
-            DllPath = string.Empty;
-            StackFrameInfo = string.Empty;
-        }
-
-        public override string ToString()
-        {
-            var info = $"[{PackageId}] {ModName} - DLL: {DllName}";
-            if (!string.IsNullOrEmpty(StackFrameInfo))
-            {
-                info += $" at {StackFrameInfo}";
-            }
-            return info;
-        }
-    }
 }
+

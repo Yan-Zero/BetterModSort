@@ -12,8 +12,10 @@
   <BMS_Settings_LabelErrorLogMaxChars>Max error log chars sent to AI</BMS_Settings_LabelErrorLogMaxChars>
   <BMS_Settings_LabelShortDescMaxChars>Max raw description chars for summary extraction</BMS_Settings_LabelShortDescMaxChars>
   <BMS_Settings_SectionDebug>── Debug Options ──</BMS_Settings_SectionDebug>
-  <BMS_Settings_EnableDebugDump>Enable Debug Dump (write LLM request/response to files)</BMS_Settings_EnableDebugDump>
-  <BMS_Settings_EnableDebugDumpDesc>When enabled, full Prompt and Response of each LLM call will be written to files under %LOCALAPPDATA%Low/Ludeon Studios/RimWorld by Ludeon Studios/BetterModSort/.</BMS_Settings_EnableDebugDumpDesc>
+  <BMS_Settings_EnableDebugDump>Enable Debug Dump (write LLM key info to files)</BMS_Settings_EnableDebugDump>
+  <BMS_Settings_EnableDebugDumpDesc>When enabled, a summary of each LLM call (model, token usage, response content) will be written to files in the Dump subdirectory.</BMS_Settings_EnableDebugDumpDesc>
+  <BMS_Settings_OpenDumpFolder>Open Data Folder</BMS_Settings_OpenDumpFolder>
+  <BMS_Settings_LabelLLMTimeout>LLM request timeout (seconds):</BMS_Settings_LabelLLMTimeout>
 
   <!-- ========== AI Loading Dialog ========== -->
   <BMS_AILoading_AnalyzingDesc>Analyzing and extracting short summary for {0}...</BMS_AILoading_AnalyzingDesc>
