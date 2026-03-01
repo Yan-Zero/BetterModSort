@@ -7,9 +7,18 @@
   <BMS_Provider_OpenAI>OpenAI (或兼容接口)</BMS_Provider_OpenAI>
   <BMS_Provider_Anthropic>Anthropic Claude</BMS_Provider_Anthropic>
   <BMS_Provider_Gemini>Google Gemini</BMS_Provider_Gemini>
+  <BMS_Provider_DeepSeek>DeepSeek (深度求索)</BMS_Provider_DeepSeek>
+  <BMS_Provider_SiliconFlow>SiliconFlow (硅基流动)</BMS_Provider_SiliconFlow>
   <BMS_Settings_LabelApiKey>LLM API Key:</BMS_Settings_LabelApiKey>
-  <BMS_Settings_LabelBaseUrl>LLM Base URL（留空将使用默认端点。自定义链接请保留后缀至 {0}）:</BMS_Settings_LabelBaseUrl>
-  <BMS_Settings_LabelModelName>LLM Model Name（如 gpt-4o, claude-3-5-sonnet-latest）:</BMS_Settings_LabelModelName>
+  <BMS_Settings_LabelBaseUrl>LLM Base URL:</BMS_Settings_LabelBaseUrl>
+  <BMS_Settings_LabelBaseUrlHint_Default>（正使用默认端点：{0}）</BMS_Settings_LabelBaseUrlHint_Default>
+  <BMS_Settings_LabelBaseUrlHint_Custom>（正使用自定义端点，请确保包含正确的路径后缀，例如 {0}）</BMS_Settings_LabelBaseUrlHint_Custom>
+  <BMS_Settings_LabelModelName>LLM Model Name:</BMS_Settings_LabelModelName>
+  <BMS_Settings_SummaryProvider>AI 提供商 (摘要专用)</BMS_Settings_SummaryProvider>
+  <BMS_Settings_SummaryProviderInfo>配置独立模型用于特征提取加速以节约时间和额度：</BMS_Settings_SummaryProviderInfo>
+  <BMS_Settings_UseSeparateSummaryModel>启用独立摘要模型</BMS_Settings_UseSeparateSummaryModel>
+  <BMS_Settings_UseSeparateSummaryModelDesc>开启后，将使用下方配置的小模型专门处理提取，以大幅提升速度并降低主模型成本。</BMS_Settings_UseSeparateSummaryModelDesc>
+  <BMS_Settings_LabelMaxConcurrentSummaryRequests>最大并发提取请求数:</BMS_Settings_LabelMaxConcurrentSummaryRequests>
   <BMS_Settings_SectionExperimental>── 实验性功能 ──</BMS_Settings_SectionExperimental>
   <BMS_Settings_EnableAISorting>启用 AI 辅助排序（实验性，替代原版自动排序按钮）</BMS_Settings_EnableAISorting>
   <BMS_Settings_EnableAISortingDesc>开启后，点击「自动排序」将调用大模型生成软约束，再由原版拓扑排序引擎执行。关闭时使用原版排序。</BMS_Settings_EnableAISortingDesc>
@@ -21,11 +30,17 @@
   <BMS_Settings_EnableDebugDumpDesc>开启后，每次 LLM 通信的关键摘要（模型、Token 用量、回复内容）会写入 Dump 子目录下的文件。</BMS_Settings_EnableDebugDumpDesc>
   <BMS_Settings_OpenDumpFolder>打开数据文件夹</BMS_Settings_OpenDumpFolder>
   <BMS_Settings_LabelLLMTimeout>LLM 请求超时时间（秒）:</BMS_Settings_LabelLLMTimeout>
+  <BMS_Settings_LabelMaxTokens>LLM 最大生成 Token 数（填 0 使用模型默认）:</BMS_Settings_LabelMaxTokens>
 
   <!-- ========== AI Loading Dialog ========== -->
   <BMS_AILoading_AnalyzingDesc>正在提炼 {0} 的性质简述...</BMS_AILoading_AnalyzingDesc>
-  <BMS_AILoading_Requesting>正在向大模型请求推荐排序...</BMS_AILoading_Requesting>
+  <BMS_AILoading_ExtractingSummaryProgress>正在并发提取短描述 ({0}/{1})...</BMS_AILoading_ExtractingSummaryProgress>
+  <BMS_AILoading_Requesting>正在向大模型发送请求，这可能需要一会儿...</BMS_AILoading_Requesting>
   <BMS_AILoading_Timeout>请求超时或被取消，请检查网络连接和 API 地址配置。</BMS_AILoading_Timeout>
+  <BMS_AILoading_Error404>请求失败 404：找不到模型 或 Endpoint (API地址) 填写有误，请检查您的设置。</BMS_AILoading_Error404>
+  <BMS_AILoading_ErrorAuth>请求失败 (401/403)：认证失败，可能是您的 API Key 无效或额度不足。</BMS_AILoading_ErrorAuth>
+  <BMS_AILoading_ErrorRateLimit>请求失败 429：触发频率限制 (Rate Limit)，请稍后再试或降低并发数量。</BMS_AILoading_ErrorRateLimit>
+  <BMS_AILoading_ErrorGenericHTTP>请求失败，HTTP 状态码: {0}。详情请按 ~ 查看控制台红色日志。</BMS_AILoading_ErrorGenericHTTP>
   <BMS_AILoading_FaultedStatus>请求发生底层异常，详情请按 ~ 查看控制台红色日志。</BMS_AILoading_FaultedStatus>
   <BMS_AILoading_ParseFailed>解析 AI 返回数据失败，详情请按 ~ 查看控制台。</BMS_AILoading_ParseFailed>
   <BMS_AILoading_SortDone>AI 辅助排序完成！</BMS_AILoading_SortDone>

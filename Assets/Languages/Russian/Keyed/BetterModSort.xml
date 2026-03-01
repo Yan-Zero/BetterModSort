@@ -7,9 +7,18 @@
   <BMS_Provider_OpenAI>OpenAI (или совместимый)</BMS_Provider_OpenAI>
   <BMS_Provider_Anthropic>Anthropic Claude</BMS_Provider_Anthropic>
   <BMS_Provider_Gemini>Google Gemini</BMS_Provider_Gemini>
+  <BMS_Provider_DeepSeek>DeepSeek</BMS_Provider_DeepSeek>
+  <BMS_Provider_SiliconFlow>SiliconFlow (Силиконовый поток)</BMS_Provider_SiliconFlow>
   <BMS_Settings_LabelApiKey>Ключ API LLM:</BMS_Settings_LabelApiKey>
-  <BMS_Settings_LabelBaseUrl>Базовый URL LLM (пусто для умолчаний. Кастомный URL требует суффикс: {0}):</BMS_Settings_LabelBaseUrl>
-  <BMS_Settings_LabelModelName>Название модели LLM (например, gpt-4o, claude-3-5-sonnet-latest):</BMS_Settings_LabelModelName>
+  <BMS_Settings_LabelBaseUrl>Базовый URL LLM:</BMS_Settings_LabelBaseUrl>
+  <BMS_Settings_LabelBaseUrlHint_Default>(Используется конечная точка по умолчанию: {0})</BMS_Settings_LabelBaseUrlHint_Default>
+  <BMS_Settings_LabelBaseUrlHint_Custom>(Используется кастомная конечная точка. Убедитесь в наличии правильного суффикса, например {0})</BMS_Settings_LabelBaseUrlHint_Custom>
+  <BMS_Settings_LabelModelName>Название модели LLM:</BMS_Settings_LabelModelName>
+  <BMS_Settings_SummaryProvider>Провайдер (модель для сводок)</BMS_Settings_SummaryProvider>
+  <BMS_Settings_SummaryProviderInfo>Настройте независимую модель для извлечения описания, чтобы сэкономить время:</BMS_Settings_SummaryProviderInfo>
+  <BMS_Settings_UseSeparateSummaryModel>Включить отдельную модель для сводок</BMS_Settings_UseSeparateSummaryModel>
+  <BMS_Settings_UseSeparateSummaryModelDesc>Если включено, для извлечения сводок модов будет использоваться другой LLM (например, меньшая и более быстрая модель), что сэкономит время и затраты.</BMS_Settings_UseSeparateSummaryModelDesc>
+  <BMS_Settings_LabelMaxConcurrentSummaryRequests>Макс. одновременных запросов сводок:</BMS_Settings_LabelMaxConcurrentSummaryRequests>
   <BMS_Settings_SectionExperimental>── Экспериментальные функции ──</BMS_Settings_SectionExperimental>
   <BMS_Settings_EnableAISorting>Включить сортировку с помощью ИИ (Экспериментально, заменяет ванильную автосортировку)</BMS_Settings_EnableAISorting>
   <BMS_Settings_EnableAISortingDesc>Если включено, нажатие кнопки «Автосортировка» вызовет LLM для генерации мягких ограничений, а затем будет использована ванильная топологическая сортировка. Если выключено, используется стандартная сортировка.</BMS_Settings_EnableAISortingDesc>
@@ -21,11 +30,17 @@
   <BMS_Settings_EnableDebugDumpDesc>Если включено, сводка каждого вызова LLM (модель, использование токенов, содержание ответа) будет записываться в файлы в подкаталоге Dump.</BMS_Settings_EnableDebugDumpDesc>
   <BMS_Settings_OpenDumpFolder>Открыть папку данных</BMS_Settings_OpenDumpFolder>
   <BMS_Settings_LabelLLMTimeout>Тайм-аут запроса LLM (сек):</BMS_Settings_LabelLLMTimeout>
+  <BMS_Settings_LabelMaxTokens>Максимум токенов LLM (0 для умолчаний модели):</BMS_Settings_LabelMaxTokens>
 
   <!-- ========== AI Loading Dialog ========== -->
   <BMS_AILoading_AnalyzingDesc>Анализ и извлечение краткого описания для {0}...</BMS_AILoading_AnalyzingDesc>
-  <BMS_AILoading_Requesting>Запрос к ИИ для рекомендуемой сортировки...</BMS_AILoading_Requesting>
+  <BMS_AILoading_ExtractingSummaryProgress>Извлечение сводок ({0}/{1})...</BMS_AILoading_ExtractingSummaryProgress>
+  <BMS_AILoading_Requesting>Отправка запроса к LLM, это может занять некоторое время...</BMS_AILoading_Requesting>
   <BMS_AILoading_Timeout>Время ожидания запроса истекло или он был отменён. Пожалуйста, проверьте сеть и настройки URL API.</BMS_AILoading_Timeout>
+  <BMS_AILoading_Error404>Ошибка 404: Модель не найдена или неверный URL. Проверьте настройки.</BMS_AILoading_Error404>
+  <BMS_AILoading_ErrorAuth>Ошибка (401/403): Ошибка аутентификации. API Key недействителен или истек.</BMS_AILoading_ErrorAuth>
+  <BMS_AILoading_ErrorRateLimit>Ошибка 429: Превышен лимит запросов. Попробуйте позже.</BMS_AILoading_ErrorRateLimit>
+  <BMS_AILoading_ErrorGenericHTTP>Запрос к API завершился с ошибкой: {0}. Смотрите лог в консоли.</BMS_AILoading_ErrorGenericHTTP>
   <BMS_AILoading_FaultedStatus>Запрос вызвал ошибку (exception). Нажмите «~», чтобы просмотреть красную ошибку в консоли.</BMS_AILoading_FaultedStatus>
   <BMS_AILoading_ParseFailed>Не удалось обработать ответ ИИ. Нажмите «~», чтобы просмотреть подробности в консоли.</BMS_AILoading_ParseFailed>
   <BMS_AILoading_SortDone>Сортировка с помощью ИИ завершена!</BMS_AILoading_SortDone>

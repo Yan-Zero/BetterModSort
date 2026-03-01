@@ -75,6 +75,11 @@ Could not resolve cross-reference to Verse.WorkTypeDef named DoctorRescue (wante
 
 [hr][/hr]
 
+[b]兼容性[/b]
+- 完美兼容 [b]Mod Manager (模组管理器)[/b]。当你在本 MOD 的设置中开启了 AI 排序功能后，直接点击 Mod Manager 自带的那个“自动排序”按钮，就会无缝唤起本程序的 AI 排序流程并应用！
+
+[hr][/hr]
+
 [b]多语言支持[/b]
 支持英语、简体中文和俄语。
 感谢 [url=https://steamcommunity.com/profiles/76561199060925579]Dmitry6[/url] 提供的俄语翻译！

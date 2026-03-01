@@ -1,4 +1,5 @@
 ﻿using Verse;
+using BetterModSort.AI;
 
 namespace BetterModSort
 {
@@ -6,15 +7,18 @@ namespace BetterModSort
     {
         OpenAI,
         Anthropic,
-        Gemini
+        Gemini,
+        DeepSeek,
+        SiliconFlow
     }
 
     public class BetterModSortSettings : ModSettings
     {
-        public LLMProvider Provider = LLMProvider.OpenAI;
-        public string ApiKey = "";
-        public string BaseUrl = "https://api.openai.com/v1/chat/completions";
-        public string ModelName = "gpt-4o";
+        public LLMConfigData MainLLM = new LLMConfigData { Provider = LLMProvider.OpenAI, ModelName = "gpt-4o" };
+        
+        public bool UseSeparateSummaryModel = false;
+        public LLMConfigData SummaryLLM = new LLMConfigData { Provider = LLMProvider.Gemini, ModelName = "gemini-3.0-flash" };
+        public int MaxConcurrentSummaryRequests = 5;
 
         /// <summary>
         /// 实验性功能：启用 AI 辅助排序（替代原版自动排序按钮逻辑）
@@ -46,18 +50,31 @@ namespace BetterModSort
         /// </summary>
         public int LLMTimeoutSeconds = 600;
 
+        /// <summary>
+        /// LLM 最大生成 Token 数
+        /// </summary>
+        public int MaxTokens = 8192;
+
         public override void ExposeData()
         {
-            Scribe_Values.Look(ref Provider, "Provider", LLMProvider.OpenAI);
-            Scribe_Values.Look(ref ApiKey, "ApiKey", "");
-            Scribe_Values.Look(ref BaseUrl, "BaseUrl", "https://api.openai.com/v1/chat/completions");
-            Scribe_Values.Look(ref ModelName, "ModelName", "gpt-4o");
+            Scribe_Deep.Look(ref MainLLM, "MainLLM");
+            Scribe_Values.Look(ref UseSeparateSummaryModel, "UseSeparateSummaryModel", false);
+            Scribe_Deep.Look(ref SummaryLLM, "SummaryLLM");
+            Scribe_Values.Look(ref MaxConcurrentSummaryRequests, "MaxConcurrentSummaryRequests", 5);
+
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+            {
+                if (MainLLM == null) MainLLM = new LLMConfigData { Provider = LLMProvider.OpenAI, ModelName = "gpt-4o" };
+                if (SummaryLLM == null) SummaryLLM = new LLMConfigData { Provider = LLMProvider.Gemini, ModelName = "gemini-3.0-flash" };
+            }
+
             Scribe_Values.Look(ref EnableAISorting, "EnableAISorting", false);
             Scribe_Values.Look(ref EnableDebugDump, "EnableDebugDump", false);
             Scribe_Values.Look(ref ErrorLogMaxChars, "ErrorLogMaxChars", 8000);
             Scribe_Values.Look(ref ShortDescMaxChars, "ShortDescMaxChars", 2500);
             Scribe_Values.Look(ref ShortDescBypassThreshold, "ShortDescBypassThreshold", 200);
             Scribe_Values.Look(ref LLMTimeoutSeconds, "LLMTimeoutSeconds", 600);
+            Scribe_Values.Look(ref MaxTokens, "MaxTokens", 8192);
             base.ExposeData();
         }
     }

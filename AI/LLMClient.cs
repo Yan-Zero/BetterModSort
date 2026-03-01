@@ -19,11 +19,6 @@ namespace BetterModSort.AI
         // 我们利用静态 HttpClient 防止连接池耗尽
         private static readonly HttpClient _httpClient;
 
-        public static LLMProvider Provider { get; set; } = LLMProvider.OpenAI;
-        public static string BaseUrl { get; set; } = ""; 
-        public static string ApiKey { get; set; } = "";
-        public static string ModelName { get; set; } = "";
-
         static LLMClient()
         {
             // 为了绕过 Mono 在某些 Windows 机器上初始化 CookieContainer 或 Proxy 时
@@ -41,40 +36,27 @@ namespace BetterModSort.AI
         /// <summary>
         /// 异步请求大模型聊天接口，返回提取后的文本内容
         /// </summary>
-        public static async Task<string> SendChatRequestAsync(string prompt, bool expectJsonFormat = false)
+        public static async Task<string> SendChatRequestAsync(string prompt, bool expectJsonFormat = false, LLMConfigData? configOverride = null)
         {
-            return await SendChatRequestInternalAsync(prompt, expectJsonFormat, fallbackToPromptInjection: false);
+            return await SendChatRequestInternalAsync(prompt, expectJsonFormat, fallbackToPromptInjection: false, configOverride);
         }
 
-        private static async Task<string> SendChatRequestInternalAsync(string prompt, bool expectJsonFormat, bool fallbackToPromptInjection)
+        private static async Task<string> SendChatRequestInternalAsync(string prompt, bool expectJsonFormat, bool fallbackToPromptInjection, LLMConfigData? configOverride)
         {
-            if (string.IsNullOrWhiteSpace(ApiKey))
+            LLMConfigData config = configOverride ?? BetterModSortMod.Settings.MainLLM;
+            LLMProviderStrategy strategy = config.CreateStrategy();
+
+            if (string.IsNullOrWhiteSpace(config.ApiKey))
                 throw new InvalidOperationException("BMS_LLM_ApiKeyMissing".TranslateSafe());
 
             bool usePromptInjection = fallbackToPromptInjection;
-            // Native structured outputs handle JSON for Anthropic and Gemini
 
             string actualPrompt = prompt;
             if (usePromptInjection)
                 actualPrompt += "\n\n注意：请务必只输出合法的 JSON 数据，不要包含任何 Markdown 格式（如 ```json 等），不要包含 <think> 标签，也不要附带任何解释文本。";
 
-            string activeBaseUrl = BaseUrl;
-            if (string.IsNullOrWhiteSpace(activeBaseUrl))
-            {
-                if (Provider == LLMProvider.OpenAI) activeBaseUrl = "https://api.openai.com/v1/chat/completions";
-                else if (Provider == LLMProvider.Anthropic) activeBaseUrl = "https://api.anthropic.com/v1/messages";
-                else if (Provider == LLMProvider.Gemini) activeBaseUrl = $"https://generativelanguage.googleapis.com/v1beta/models/{ModelName}:generateContent";
-            }
-            else if (Provider == LLMProvider.Gemini && !activeBaseUrl.Contains(":generateContent"))
-            {
-                if (!activeBaseUrl.EndsWith("/")) activeBaseUrl += "/";
-                activeBaseUrl += $"models/{ModelName}:generateContent";
-            }
-
-            var requestMessage = new HttpRequestMessage(HttpMethod.Post, activeBaseUrl);
-            object? requestBody = null;
             object? sharedJsonSchema = null;
-            if (expectJsonFormat && !usePromptInjection && (Provider == LLMProvider.Anthropic || Provider == LLMProvider.Gemini))
+            if (expectJsonFormat && !usePromptInjection && (config.Provider == LLMProvider.Anthropic || config.Provider == LLMProvider.Gemini))
             {
                 sharedJsonSchema = new
                 {
@@ -98,62 +80,12 @@ namespace BetterModSort.AI
                             }
                         }
                     },
-                    required = new[] { "constraints" }
+                    required = new[] { "constraints" },
+                    additionalProperties = false
                 };
             }
 
-            if (Provider == LLMProvider.OpenAI)
-            {
-                requestBody = new
-                {
-                    model = ModelName,
-                    temperature = 0.4,
-                    response_format = (expectJsonFormat && !usePromptInjection) ? new { type = "json_object" } : null,
-                    messages = new[] { new { role = "user", content = actualPrompt } }
-                };
-                requestMessage.Headers.Add("Authorization", $"Bearer {ApiKey}");
-            }
-            else if (Provider == LLMProvider.Anthropic)
-            {
-                requestBody = new
-                {
-                    model = ModelName,
-                    max_tokens = 4096 * 4,
-                    temperature = 0.4,
-                    messages = new[] { new { role = "user", content = actualPrompt } },
-                    output_config = (sharedJsonSchema != null) ? new
-                    {
-                        format = new
-                        {
-                            type = "json_schema",
-                            schema = sharedJsonSchema
-                        }
-                    } : null
-                };
-                requestMessage.Headers.Add("x-api-key", ApiKey);
-                requestMessage.Headers.Add("anthropic-version", "2023-06-01");
-            }
-            else if (Provider == LLMProvider.Gemini)
-            {
-                string url = activeBaseUrl;
-                if (!url.Contains("key="))
-                {
-                    url += (url.Contains("?") ? "&" : "?") + "key=" + ApiKey;
-                }
-                requestMessage.RequestUri = new Uri(url);
-                requestBody = new
-                {
-                    contents = new[] { new { parts = new[] { new { text = actualPrompt } } } },
-                    generationConfig = (sharedJsonSchema != null) ? new 
-                    { 
-                        responseMimeType = "application/json",
-                        responseJsonSchema = sharedJsonSchema
-                    } : null
-                };
-            }
-
-            string payload = JsonConvert.SerializeObject(requestBody, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            requestMessage.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+            var requestMessage = strategy.BuildRequest(actualPrompt, expectJsonFormat, usePromptInjection, sharedJsonSchema, out object? requestBodyObj);
 
             _httpClient.Timeout = TimeSpan.FromSeconds(BetterModSortMod.Settings.LLMTimeoutSeconds);
 
@@ -165,45 +97,30 @@ namespace BetterModSort.AI
                 if (expectJsonFormat && !fallbackToPromptInjection && response.StatusCode == System.Net.HttpStatusCode.BadRequest)
                 {
                     Log.Warning("[BetterModSort] " + "BMS_LLM_JSONFallbackRetry".TranslateSafe());
-                    return await SendChatRequestInternalAsync(prompt, expectJsonFormat, fallbackToPromptInjection: true);
+                    return await SendChatRequestInternalAsync(prompt, expectJsonFormat, fallbackToPromptInjection: true, configOverride);
                 }
 
-                DumpSummary(actualPrompt, response.StatusCode.ToString(), null, null, responseString);
-                throw new Exception($"LLM 服务请求失败: {response.StatusCode}\n{responseString}");
+                DumpSummary(config, actualPrompt, response.StatusCode.ToString(), null, null, responseString);
+                throw new LLMApiException((int)response.StatusCode, responseString);
             }
 
             try
             {
-                var jsonResponse = JObject.Parse(responseString);
-                string? content = null;
-                JToken? usage = null;
+                string content = strategy.ExtractContentAndUsage(responseString, out JToken? usage);
 
-                if (Provider == LLMProvider.OpenAI)
-                {
-                    content = jsonResponse["choices"]?[0]?["message"]?["content"]?.ToString();
-                    usage = jsonResponse["usage"];
-                }
-                else if (Provider == LLMProvider.Anthropic)
-                {
-                    content = jsonResponse["content"]?[0]?["text"]?.ToString();
-                    usage = jsonResponse["usage"];
-                }
-                else if (Provider == LLMProvider.Gemini)
-                {
-                    content = jsonResponse["candidates"]?[0]?["content"]?["parts"]?[0]?["text"]?.ToString();
-                    usage = jsonResponse["usageMetadata"];
-                }
+                DumpSummary(config, actualPrompt, response.StatusCode.ToString(), usage, content, null);
 
-                DumpSummary(actualPrompt, response.StatusCode.ToString(), usage, content, null);
+                if (string.IsNullOrWhiteSpace(content))
+                    return "";
 
-                if (content != null && expectJsonFormat)
+                if (expectJsonFormat)
                     content = CleanJsonResponse(content);
 
-                return content ?? responseString;
+                return content;
             }
             catch
             {
-                DumpSummary(actualPrompt, response.StatusCode.ToString(), null, null, responseString);
+                DumpSummary(config, actualPrompt, response.StatusCode.ToString(), null, null, responseString);
                 return responseString;
             }
         }
@@ -258,7 +175,7 @@ namespace BetterModSort.AI
         /// <summary>
         /// 当 Debug Dump 开启时，将关键摘要写入 Dump/ 子目录
         /// </summary>
-        private static void DumpSummary(string prompt, string statusCode, JToken? usage, string? content, string? errorBody)
+        private static void DumpSummary(LLMConfigData config, string prompt, string statusCode, JToken? usage, string? content, string? errorBody)
         {
             try
             {
@@ -272,15 +189,16 @@ namespace BetterModSort.AI
 
                 var sb = new StringBuilder();
                 sb.AppendLine($"Time: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-                sb.AppendLine($"Model: {ModelName}");
+                sb.AppendLine($"Provider: {config.Provider}");
+                sb.AppendLine($"Model: {config.ModelName}");
                 sb.AppendLine($"Status: {statusCode}");
                 sb.AppendLine($"Prompt Length: {prompt?.Length ?? 0} chars");
 
                 if (usage != null)
                 {
-                    if (Provider == LLMProvider.Anthropic)
+                    if (config.Provider == LLMProvider.Anthropic)
                         sb.AppendLine($"Tokens — input: {usage["input_tokens"]}, output: {usage["output_tokens"]}");
-                    else if (Provider == LLMProvider.Gemini)
+                    else if (config.Provider == LLMProvider.Gemini)
                         sb.AppendLine($"Tokens — prompt: {usage["promptTokenCount"]}, candidates: {usage["candidatesTokenCount"]}, total: {usage["totalTokenCount"]}");
                     else
                         sb.AppendLine($"Tokens — prompt: {usage["prompt_tokens"]}, completion: {usage["completion_tokens"]}, total: {usage["total_tokens"]}");

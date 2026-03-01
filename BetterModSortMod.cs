@@ -23,11 +23,8 @@ namespace BetterModSort
             HarmonyInstance = new Harmony("com.bettermodsort.rimworld");
             HarmonyInstance.PatchAll(Assembly.GetExecutingAssembly());
             
-            // 初始化 LLMClient 参数
-            SyncLLMClientSettings();
-
             // 初始化 MetaDataManager：计算当前 LoadOrder Hash，备份或沿用上次会话的嫌疑 MOD 列表
-            AI.MetaDataManager.InitializeCurrentSession();
+            MetaDataManager.InitializeCurrentSession();
 
             // 动态挂载特殊的报错强化器，仅当存在目标 MOD 时开启正则校验以节约性能
             if (ModLister.GetActiveModWithIdentifier("ceteam.combatextended", true) != null)
@@ -39,66 +36,170 @@ namespace BetterModSort
             Log.Message("[BetterModSort] " + "BMS_Log_HarmonyPatchesApplied".TranslateSafe());
         }
 
-        private static void SyncLLMClientSettings()
+        private void DrawLabeledTextEntry(Listing_Standard listing, string label, ref string value)
         {
-            LLMClient.Provider = Settings.Provider;
-            LLMClient.BaseUrl = Settings.BaseUrl;
-            LLMClient.ApiKey = Settings.ApiKey;
-            LLMClient.ModelName = Settings.ModelName;
+            Rect rect = listing.GetRect(30f);
+            Rect labelRect = new(rect.x, rect.y, rect.width * 0.25f, rect.height);
+            Rect textRect = new(rect.x + rect.width * 0.25f, rect.y, rect.width * 0.75f, rect.height);
+            
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(labelRect, label);
+            Text.Anchor = TextAnchor.UpperLeft;
+            
+            value = Widgets.TextField(textRect, value ?? "");
+            listing.Gap(listing.verticalSpacing);
         }
 
-        public override void DoSettingsWindowContents(Rect inRect)
+        private void DrawLabeledTextEntryWithHint(Listing_Standard listing, string label, string hint, ref string value)
         {
-            Listing_Standard listing = new Listing_Standard();
-            listing.Begin(inRect);
+            // Give extra height for the sublabel to render properly
+            Rect rect = listing.GetRect(50f);
+            Rect labelRect = new(rect.x, rect.y, rect.width * 0.25f, 30f);
+            Rect textRect = new(rect.x + rect.width * 0.25f, rect.y, rect.width * 0.75f, 30f);
+            
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(labelRect, label);
+            Text.Anchor = TextAnchor.UpperLeft;
+            
+            value = Widgets.TextField(textRect, value ?? "");
+            // Draw the hint immediately below the text field, starting from the left edge
+            Rect hintRect = new(rect.x, rect.y + 30f, rect.width, 20f);
+            Text.Font = GameFont.Tiny;
+            GUI.color = Color.gray;
+            Widgets.Label(hintRect, hint);
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+            
+            listing.Gap(listing.verticalSpacing);
+        }
 
-            // ========== AI 连接配置 ==========
-            listing.Label("BMS_Settings_SectionAI".TranslateSafe());
-            listing.GapLine();
+        private void DrawLabeledNumberEntry(Listing_Standard listing, string label, ref int value, int min = 0)
+        {
+            Rect rect = listing.GetRect(30f);
+            Rect labelRect = new Rect(rect.x, rect.y, rect.width * 0.7f, rect.height);
+            Rect textRect = new Rect(rect.x + rect.width * 0.7f, rect.y, rect.width * 0.3f, rect.height);
+            
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(labelRect, label);
+            Text.Anchor = TextAnchor.UpperLeft;
+            
+            string buffer = value.ToString();
+            buffer = Widgets.TextField(textRect, buffer);
+            if (int.TryParse(buffer, out int parsed) && parsed >= min)
+            {
+                value = parsed;
+            }
+            listing.Gap(listing.verticalSpacing);
+        }
 
-            listing.Label("BMS_Settings_Provider".TranslateSafe() + ": " + $"BMS_Provider_{Settings.Provider}".TranslateSafe());
-            if (listing.ButtonText($"BMS_Provider_{Settings.Provider}".TranslateSafe()))
+        private void DrawLLMConfigBlock(Listing_Standard listing, LLMConfigData config, string providerLabelKey)
+        {
+            Rect rect = listing.GetRect(30f);
+            Rect labelRect = new(rect.x, rect.y, rect.width * 0.25f, rect.height);
+            Rect buttonRect = new(rect.x + rect.width * 0.25f, rect.y, rect.width * 0.75f, rect.height);
+
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(labelRect, providerLabelKey.TranslateSafe());
+            Text.Anchor = TextAnchor.UpperLeft;
+
+            if (Widgets.ButtonText(buttonRect, $"BMS_Provider_{config.Provider}".TranslateSafe()))
             {
                 var list = new List<FloatMenuOption>();
                 foreach (LLMProvider provider in Enum.GetValues(typeof(LLMProvider)))
                 {
-                    LLMProvider currentProvider = provider; // captures local copy
+                    LLMProvider currentProvider = provider; 
                     list.Add(new FloatMenuOption($"BMS_Provider_{currentProvider}".TranslateSafe(), () =>
                     {
-                        Settings.Provider = currentProvider;
+                        config.Provider = currentProvider;
                         if (currentProvider == LLMProvider.OpenAI)
                         {
-                            Settings.BaseUrl = ""; // Default handled in LLMClient
-                            Settings.ModelName = "gpt-4o";
+                            config.BaseUrl = ""; 
+                            config.ModelName = "gpt-4o";
                         }
                         else if (currentProvider == LLMProvider.Anthropic)
                         {
-                            Settings.BaseUrl = "";
-                            Settings.ModelName = "claude-4-6-haiku";
+                            config.BaseUrl = "";
+                            config.ModelName = "claude-4-6-haiku";
                         }
                         else if (currentProvider == LLMProvider.Gemini)
                         {
-                            Settings.BaseUrl = "";
-                            Settings.ModelName = "gemini-3-flash-preview";
+                            config.BaseUrl = "";
+                            config.ModelName = "gemini-3-flash-preview";
+                        }
+                        else if (currentProvider == LLMProvider.DeepSeek)
+                        {
+                            config.BaseUrl = "";
+                            config.ModelName = "deepseek-chat";
+                        }
+                        else if (currentProvider == LLMProvider.SiliconFlow)
+                        {
+                            config.BaseUrl = "";
+                            config.ModelName = "deepseek-ai/DeepSeek-V3.2";
                         }
                     }));
                 }
                 Find.WindowStack.Add(new FloatMenu(list));
             }
-            listing.Gap();
+            listing.Gap(listing.verticalSpacing);
 
-            listing.Label("BMS_Settings_LabelApiKey".TranslateSafe());
-            Settings.ApiKey = listing.TextEntry(Settings.ApiKey);
-            
+            DrawLabeledTextEntry(listing, "BMS_Settings_LabelApiKey".TranslateSafe(), ref config.ApiKey);
+            string defaultUrl = "https://api.openai.com/v1/chat/completions";
             string baseUrlHintSuffix = "/chat/completions";
-            if (Settings.Provider == LLMProvider.Anthropic) baseUrlHintSuffix = "/v1/messages";
-            else if (Settings.Provider == LLMProvider.Gemini) baseUrlHintSuffix = "/v1beta/";
+            if (config.Provider == LLMProvider.Anthropic) { defaultUrl = "https://api.anthropic.com/v1/messages"; baseUrlHintSuffix = "/v1/messages"; }
+            else if (config.Provider == LLMProvider.Gemini) { defaultUrl = "https://generativelanguage.googleapis.com/v1beta/"; baseUrlHintSuffix = "/v1beta/"; }
+            else if (config.Provider == LLMProvider.DeepSeek) { defaultUrl = "https://api.deepseek.com/chat/completions"; baseUrlHintSuffix = "/chat/completions"; }
+            else if (config.Provider == LLMProvider.SiliconFlow) { defaultUrl = "https://api.siliconflow.cn/v1/chat/completions"; baseUrlHintSuffix = "/chat/completions"; }
 
-            listing.Label("BMS_Settings_LabelBaseUrl".TranslateSafe(baseUrlHintSuffix));
-            Settings.BaseUrl = listing.TextEntry(Settings.BaseUrl);
+            string hintStr = string.IsNullOrWhiteSpace(config.BaseUrl)
+                ? "BMS_Settings_LabelBaseUrlHint_Default".TranslateSafe(defaultUrl)
+                : "BMS_Settings_LabelBaseUrlHint_Custom".TranslateSafe(baseUrlHintSuffix);
 
-            listing.Label("BMS_Settings_LabelModelName".TranslateSafe());
-            Settings.ModelName = listing.TextEntry(Settings.ModelName);
+            DrawLabeledTextEntryWithHint(listing, "BMS_Settings_LabelBaseUrl".TranslateSafe(), hintStr, ref config.BaseUrl);
+            DrawLabeledTextEntry(listing, "BMS_Settings_LabelModelName".TranslateSafe(), ref config.ModelName);
+            DrawLabeledNumberEntry(listing, "BMS_Settings_LabelMaxTokens".TranslateSafe(), ref config.MaxTokens, 0);
+        }
+
+        private Vector2 _scrollPosition = Vector2.zero;
+        private float _scrollViewHeight = 1000f;
+
+        public override void DoSettingsWindowContents(Rect inRect)
+        {
+            if (Settings.MainLLM == null) Settings.MainLLM = new LLMConfigData { Provider = LLMProvider.OpenAI, ModelName = "gpt-4o" };
+            if (Settings.SummaryLLM == null) Settings.SummaryLLM = new LLMConfigData { Provider = LLMProvider.Gemini, ModelName = "gemini-3.0-flash" };
+
+            Rect outRect = new Rect(inRect.x, inRect.y, inRect.width, inRect.height);
+            // viewRect acts as the scroll boundary for the scrollbar
+            Rect viewRect = new Rect(0f, 0f, inRect.width - 20f, _scrollViewHeight);
+
+            Widgets.BeginScrollView(outRect, ref _scrollPosition, viewRect, true);
+
+            Listing_Standard listing = new();
+            listing.Begin(new Rect(0f, 0f, viewRect.width, 99999f));
+
+            // ========== AI 连接配置 ==========
+            listing.Label("BMS_Settings_SectionAI".TranslateSafe());
+            listing.GapLine();
+
+            DrawLLMConfigBlock(listing, Settings.MainLLM, "BMS_Settings_Provider");
+
+            listing.Gap();
+            listing.CheckboxLabeled("BMS_Settings_UseSeparateSummaryModel".TranslateSafe(), ref Settings.UseSeparateSummaryModel, "BMS_Settings_UseSeparateSummaryModelDesc".TranslateSafe());
+            if (Settings.UseSeparateSummaryModel)
+            {
+                listing.Gap();
+                listing.Label("BMS_Settings_SummaryProviderInfo".TranslateSafe());
+                
+                listing.ColumnWidth -= 20f;
+                listing.Indent(20f);
+                
+                DrawLLMConfigBlock(listing, Settings.SummaryLLM, "BMS_Settings_SummaryProvider");
+                
+                listing.Gap();
+                DrawLabeledNumberEntry(listing, "BMS_Settings_LabelMaxConcurrentSummaryRequests".TranslateSafe(), ref Settings.MaxConcurrentSummaryRequests, 1);
+                
+                listing.Outdent(20f);
+                listing.ColumnWidth += 20f;
+            }
 
             listing.Gap();
 
@@ -109,30 +210,10 @@ namespace BetterModSort
             listing.CheckboxLabeled("BMS_Settings_EnableAISorting".TranslateSafe(), ref Settings.EnableAISorting,
                 "BMS_Settings_EnableAISortingDesc".TranslateSafe());
             
-
-            listing.Label("BMS_Settings_LabelErrorLogMaxChars".TranslateSafe());
-            string errorLogMaxStr = Settings.ErrorLogMaxChars.ToString();
-            errorLogMaxStr = listing.TextEntry(errorLogMaxStr);
-            if (int.TryParse(errorLogMaxStr, out int parsedErrMax) && parsedErrMax > 0)
-                Settings.ErrorLogMaxChars = parsedErrMax;
-
-            listing.Label("BMS_Settings_LabelShortDescMaxChars".TranslateSafe());
-            string shortDescMaxStr = Settings.ShortDescMaxChars.ToString();
-            shortDescMaxStr = listing.TextEntry(shortDescMaxStr);
-            if (int.TryParse(shortDescMaxStr, out int parsedDescMax) && parsedDescMax > 0)
-                Settings.ShortDescMaxChars = parsedDescMax;
-
-            listing.Label("BMS_Settings_LabelShortDescBypassThreshold".TranslateSafe());
-            string shortDescBypassStr = Settings.ShortDescBypassThreshold.ToString();
-            shortDescBypassStr = listing.TextEntry(shortDescBypassStr);
-            if (int.TryParse(shortDescBypassStr, out int parsedBypass) && parsedBypass >= 0)
-                Settings.ShortDescBypassThreshold = parsedBypass;
-
-            listing.Label("BMS_Settings_LabelLLMTimeout".TranslateSafe());
-            string timeoutStr = Settings.LLMTimeoutSeconds.ToString();
-            timeoutStr = listing.TextEntry(timeoutStr);
-            if (int.TryParse(timeoutStr, out int parsedTimeout) && parsedTimeout > 0)
-                Settings.LLMTimeoutSeconds = parsedTimeout;
+            DrawLabeledNumberEntry(listing, "BMS_Settings_LabelErrorLogMaxChars".TranslateSafe(), ref Settings.ErrorLogMaxChars, 1);
+            DrawLabeledNumberEntry(listing, "BMS_Settings_LabelShortDescMaxChars".TranslateSafe(), ref Settings.ShortDescMaxChars, 1);
+            DrawLabeledNumberEntry(listing, "BMS_Settings_LabelShortDescBypassThreshold".TranslateSafe(), ref Settings.ShortDescBypassThreshold, 0);
+            DrawLabeledNumberEntry(listing, "BMS_Settings_LabelLLMTimeout".TranslateSafe(), ref Settings.LLMTimeoutSeconds, 1);
 
             listing.Gap();
 
@@ -155,13 +236,15 @@ namespace BetterModSort
             listing.SubLabel(rootDir, 0.6f);
 
             listing.End();
+            _scrollViewHeight = listing.CurHeight;
+            Widgets.EndScrollView();
+
             base.DoSettingsWindowContents(inRect);
         }
 
         public override void WriteSettings()
         {
             base.WriteSettings();
-            SyncLLMClientSettings();
         }
 
         public override string SettingsCategory()

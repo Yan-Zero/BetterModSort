@@ -87,51 +87,76 @@ namespace BetterModSort.AI
             
             // 1. 获取本次（或跨次）嫌疑 MOD 列表
             var suspectIds = MetaDataManager.GetSuspectPackageIds();
-            var suspectShortDescs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var suspectShortDescs = new System.Collections.Concurrent.ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (var packageId in suspectIds)
+            var tasks = new List<Task>();
+            int completedCount = 0;
+            int totalToRequest = 0;
+
+            var summaryConfig = BetterModSortMod.Settings.UseSeparateSummaryModel ? BetterModSortMod.Settings.SummaryLLM : null;
+
+            using (var throttler = new System.Threading.SemaphoreSlim(BetterModSortMod.Settings.MaxConcurrentSummaryRequests))
             {
-                var mod = activeMods.FirstOrDefault(m => string.Equals(m.PackageId, packageId, StringComparison.OrdinalIgnoreCase));
-                if (mod == null) continue;
-
-                string rawDesc = mod.Description ?? "";
-                
-                // 2. 尝试拿本地提炼缓存
-                if (MetaDataManager.TryGetShortDesc(packageId, rawDesc, out string shortDesc))
-                    suspectShortDescs[packageId] = shortDesc;
-                else
+                foreach (var packageId in suspectIds)
                 {
-                    // 3. 缓存失效或不存在，小请求 AI
-                    try
-                    {
-                        // 如果原始描述很短，直接跳过 AI 提炼使用原文
-                        if (rawDesc.Length <= BetterModSortMod.Settings.ShortDescBypassThreshold)
-                        {
-                            suspectShortDescs[packageId] = rawDesc;
-                            MetaDataManager.SaveShortDesc(packageId, rawDesc, rawDesc);
-                            continue;
-                        }
+                    var mod = activeMods.FirstOrDefault(m => string.Equals(m.PackageId, packageId, StringComparison.OrdinalIgnoreCase));
+                    if (mod == null) continue;
 
-                        _statusText = "BMS_AILoading_AnalyzingDesc".TranslateSafe(mod.Name);
-                        string promptForDesc = PromptBuilder.BuildShortDescPrompt(mod.PackageId, mod.Name, rawDesc);
-                        string aiShortResult = await LLMClient.SendChatRequestAsync(promptForDesc, expectJsonFormat: false);
-                        
-                        if (!string.IsNullOrWhiteSpace(aiShortResult))
-                        {
-                            string finalDesc = aiShortResult.Trim();
-                            // 如果 AI 生成的内容不仅没缩短，反而比原文还长，那就直接弃用 AI 生成的，改用原文。
-                            if (finalDesc.Length >= rawDesc.Length)
-                            {
-                                finalDesc = rawDesc;
-                            }
-                            MetaDataManager.SaveShortDesc(packageId, rawDesc, finalDesc);
-                            suspectShortDescs[packageId] = finalDesc;
-                        }
-                    }
-                    catch (Exception ex)
+                    string rawDesc = mod.Description ?? "";
+                    
+                    // 2. 尝试拿本地提炼缓存
+                    if (MetaDataManager.TryGetShortDesc(packageId, rawDesc, out string shortDesc))
                     {
-                        Log.Warning("[BetterModSort] " + "BMS_Log_AILoadingExtractFailed".TranslateSafe(packageId, ex.Message));
+                        suspectShortDescs[packageId] = shortDesc;
+                        continue;
                     }
+
+                    // 如果原始描述很短，直接跳过 AI 提炼使用原文
+                    if (rawDesc.Length <= BetterModSortMod.Settings.ShortDescBypassThreshold)
+                    {
+                        suspectShortDescs[packageId] = rawDesc;
+                        MetaDataManager.SaveShortDesc(packageId, rawDesc, rawDesc);
+                        continue;
+                    }
+
+                    totalToRequest++;
+                    string safePackageId = packageId;
+                    string modName = mod.Name;
+
+                    tasks.Add(Task.Run(async () =>
+                    {
+                        await throttler.WaitAsync();
+                        try
+                        {
+                            _statusText = "BMS_AILoading_ExtractingSummaryProgress".TranslateSafe(completedCount.ToString(), totalToRequest.ToString()) + $"\n-> {modName}";
+                            string promptForDesc = PromptBuilder.BuildShortDescPrompt(safePackageId, modName, rawDesc);
+                            string aiShortResult = await LLMClient.SendChatRequestAsync(promptForDesc, expectJsonFormat: false, configOverride: summaryConfig);
+                            
+                            if (!string.IsNullOrWhiteSpace(aiShortResult))
+                            {
+                                string finalDesc = aiShortResult.Trim();
+                                if (finalDesc.Length >= rawDesc.Length) finalDesc = rawDesc;
+                                MetaDataManager.SaveShortDesc(safePackageId, rawDesc, finalDesc);
+                                suspectShortDescs[safePackageId] = finalDesc;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Warning("[BetterModSort] " + "BMS_Log_AILoadingExtractFailed".TranslateSafe(safePackageId, ex.Message));
+                        }
+                        finally
+                        {
+                            int currentCompleted = System.Threading.Interlocked.Increment(ref completedCount);
+                            _statusText = "BMS_AILoading_ExtractingSummaryProgress".TranslateSafe(currentCompleted.ToString(), totalToRequest.ToString());
+                            throttler.Release();
+                        }
+                    }));
+                }
+
+                if (totalToRequest > 0)
+                {
+                    _statusText = "BMS_AILoading_ExtractingSummaryProgress".TranslateSafe("0", totalToRequest.ToString());
+                    await Task.WhenAll(tasks);
                 }
             }
 
@@ -140,16 +165,18 @@ namespace BetterModSort.AI
             string errorLogContent = "";
             try
             {
-                if (File.Exists(ErrorHistoryManager.ErrorLogFilePath))
-                    errorLogContent = File.ReadAllText(ErrorHistoryManager.ErrorLogFilePath);
+                if (System.IO.File.Exists(ErrorHistoryManager.ErrorLogFilePath))
+                    errorLogContent = System.IO.File.ReadAllText(ErrorHistoryManager.ErrorLogFilePath);
             }
             catch { }
 
+            var finalDict = new Dictionary<string, string>(suspectShortDescs, StringComparer.OrdinalIgnoreCase);
+
             // 5. 组合终极 Prompt
-            string prompt = PromptBuilder.BuildSortingSoftConstraintsPrompt(activeMods, errorLogContent, suspectShortDescs);
+            string prompt = PromptBuilder.BuildSortingSoftConstraintsPrompt(activeMods, errorLogContent, finalDict);
             
             // 返回大请求的 Task
-            return await LLMClient.SendChatRequestAsync(prompt, expectJsonFormat: true);
+            return await LLMClient.SendChatRequestAsync(prompt, expectJsonFormat: true, configOverride: BetterModSortMod.Settings.MainLLM);
         }
 
         public override void WindowUpdate()
@@ -167,7 +194,22 @@ namespace BetterModSort.AI
                 else if (_aiTask.IsFaulted)
                 {
                     Log.Error("[BetterModSort] " + "BMS_Log_AILoadingException".TranslateSafe(_aiTask.Exception?.ToString() ?? ""));
-                    _statusText = "BMS_AILoading_FaultedStatus".TranslateSafe();
+                    
+                    var baseException = _aiTask.Exception?.GetBaseException();
+                    if (baseException is LLMApiException apiEx)
+                    {
+                        if (apiEx.StatusCode == 404)
+                            _statusText = "BMS_AILoading_Error404".TranslateSafe();
+                        else if (apiEx.StatusCode == 401 || apiEx.StatusCode == 403)
+                            _statusText = "BMS_AILoading_ErrorAuth".TranslateSafe();
+                        else if (apiEx.StatusCode == 429)
+                            _statusText = "BMS_AILoading_ErrorRateLimit".TranslateSafe();
+                        else
+                            _statusText = "BMS_AILoading_ErrorGenericHTTP".TranslateSafe(apiEx.StatusCode.ToString());
+                    }
+                    else
+                        _statusText = "BMS_AILoading_FaultedStatus".TranslateSafe();
+                    
                     _failed = true;
                 }
                 else

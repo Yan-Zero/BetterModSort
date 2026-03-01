@@ -32,17 +32,7 @@ Even without AI sorting, this feature helps you find the culprit of red errors. 
 
 Supports English, Simplified Chinese, and Russian.
 
----
-
-[中文]
-装了一堆 MOD，不知道怎么排加载顺序？
-这个 MOD 可以接入大模型（LLM），让 AI 根据你实际遇到的报错情况，帮你建议一个更合理的加载顺序。
-
-由于需要参考报错来分析哪些 MOD 之间可能有冲突，所以一般的用法是：先正常玩一局（或者至少加载一次游戏），让 MOD 在后台收集并记录报错信息，然后再点击 AI 排序，效果会比较好。
-
-报错来源分析：
-即使不用 AI 排序，它也能帮你查出红字到底是哪个 MOD 引起的！会自动深度分析 DLL 堆栈、XML 解析节点、Def 配置与继承链、交叉引用、CE 兼容性以及材质路径，把结果保存到存档目录下 BetterModSort.Error.txt，并输出在游戏控制台。
-
-支持简中、英文、俄语。
+Compatibility:
+- Fully compatible with ModManager. When AI sorting is enabled in the settings, clicking ModManager's native auto-sort button will trigger the AI sorting process instead.
   </description>
 </ModMetaData>

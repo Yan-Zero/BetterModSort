@@ -7,9 +7,18 @@
   <BMS_Provider_OpenAI>OpenAI (or Compatible)</BMS_Provider_OpenAI>
   <BMS_Provider_Anthropic>Anthropic Claude</BMS_Provider_Anthropic>
   <BMS_Provider_Gemini>Google Gemini</BMS_Provider_Gemini>
+  <BMS_Provider_DeepSeek>DeepSeek</BMS_Provider_DeepSeek>
+  <BMS_Provider_SiliconFlow>SiliconFlow</BMS_Provider_SiliconFlow>
   <BMS_Settings_LabelApiKey>LLM API Key:</BMS_Settings_LabelApiKey>
-  <BMS_Settings_LabelBaseUrl>LLM Base URL (keep empty for defaults. Custom URL requires suffix: {0}):</BMS_Settings_LabelBaseUrl>
-  <BMS_Settings_LabelModelName>LLM Model Name (e.g. gpt-4o, claude-3-5-sonnet-latest):</BMS_Settings_LabelModelName>
+  <BMS_Settings_LabelBaseUrl>LLM Base URL:</BMS_Settings_LabelBaseUrl>
+  <BMS_Settings_LabelBaseUrlHint_Default>(Default endpoint active: {0})</BMS_Settings_LabelBaseUrlHint_Default>
+  <BMS_Settings_LabelBaseUrlHint_Custom>(Custom endpoint active. Ensure correct path suffix, e.g. {0})</BMS_Settings_LabelBaseUrlHint_Custom>
+  <BMS_Settings_LabelModelName>LLM Model Name:</BMS_Settings_LabelModelName>
+  <BMS_Settings_SummaryProvider>Provider (Summary Model)</BMS_Settings_SummaryProvider>
+  <BMS_Settings_SummaryProviderInfo>Configure an independent, faster model for description extraction to save time and API costs:</BMS_Settings_SummaryProviderInfo>
+  <BMS_Settings_UseSeparateSummaryModel>Enable Separate Summary Model</BMS_Settings_UseSeparateSummaryModel>
+  <BMS_Settings_UseSeparateSummaryModelDesc>If enabled, uses a different LLM (like a smaller, faster model) solely for extracting mod summaries, saving time and cost.</BMS_Settings_UseSeparateSummaryModelDesc>
+  <BMS_Settings_LabelMaxConcurrentSummaryRequests>Max Concurrent Summary Requests:</BMS_Settings_LabelMaxConcurrentSummaryRequests>
   <BMS_Settings_SectionExperimental>── Experimental Features ──</BMS_Settings_SectionExperimental>
   <BMS_Settings_EnableAISorting>Enable AI-assisted sorting (Experimental, replaces vanilla auto-sort)</BMS_Settings_EnableAISorting>
   <BMS_Settings_EnableAISortingDesc>When enabled, clicking "Auto-sort" will call an LLM to generate soft constraints, then use vanilla topological sort. When disabled, vanilla sorting is used.</BMS_Settings_EnableAISortingDesc>
@@ -20,12 +29,18 @@
   <BMS_Settings_EnableDebugDump>Enable Debug Dump (write LLM key info to files)</BMS_Settings_EnableDebugDump>
   <BMS_Settings_EnableDebugDumpDesc>When enabled, a summary of each LLM call (model, token usage, response content) will be written to files in the Dump subdirectory.</BMS_Settings_EnableDebugDumpDesc>
   <BMS_Settings_OpenDumpFolder>Open Data Folder</BMS_Settings_OpenDumpFolder>
-  <BMS_Settings_LabelLLMTimeout>LLM request timeout (seconds):</BMS_Settings_LabelLLMTimeout>
+  <BMS_Settings_LabelLLMTimeout>LLM Request Timeout (sec):</BMS_Settings_LabelLLMTimeout>
+  <BMS_Settings_LabelMaxTokens>LLM Max Tokens (0 for model default):</BMS_Settings_LabelMaxTokens>
 
   <!-- ========== AI Loading Dialog ========== -->
   <BMS_AILoading_AnalyzingDesc>Analyzing and extracting short summary for {0}...</BMS_AILoading_AnalyzingDesc>
-  <BMS_AILoading_Requesting>Requesting AI for recommended sorting...</BMS_AILoading_Requesting>
+  <BMS_AILoading_ExtractingSummaryProgress>Extracting summaries concurrently ({0}/{1})...</BMS_AILoading_ExtractingSummaryProgress>
+  <BMS_AILoading_Requesting>Sending request to LLM, this might take a while...</BMS_AILoading_Requesting>
   <BMS_AILoading_Timeout>Request timed out or was canceled. Please check your network and API URL config.</BMS_AILoading_Timeout>
+  <BMS_AILoading_Error404>Error 404: Model not found or Endpoint URL is incorrect. Please check your settings.</BMS_AILoading_Error404>
+  <BMS_AILoading_ErrorAuth>Error (401/403): Authentication failed. Your API Key might be invalid or expired.</BMS_AILoading_ErrorAuth>
+  <BMS_AILoading_ErrorRateLimit>Error 429: API Rate Limit exceeded. Please try again later.</BMS_AILoading_ErrorRateLimit>
+  <BMS_AILoading_ErrorGenericHTTP>API Request failed with HTTP Status: {0}. Refer to the console log.</BMS_AILoading_ErrorGenericHTTP>
   <BMS_AILoading_FaultedStatus>Request threw an exception. Press ~ to view the red error in console.</BMS_AILoading_FaultedStatus>
   <BMS_AILoading_ParseFailed>Failed to parse AI response. Press ~ to view console for details.</BMS_AILoading_ParseFailed>
   <BMS_AILoading_SortDone>AI-assisted sorting complete!</BMS_AILoading_SortDone>

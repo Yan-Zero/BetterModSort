@@ -73,6 +73,11 @@ Related MODs (3):
 
 [hr][/hr]
 
+[b]Compatibility[/b]
+- Fully compatible with [b]Mod Manager[/b]. Once you enable AI sorting in this mod's settings, clicking Mod Manager's native "Auto-sort" button will seamlessly trigger this mod's AI sorting process instead!
+
+[hr][/hr]
+
 [b]Language Support[/b]
 Supports English, Simplified Chinese, and Russian.
 Thanks to [url=https://steamcommunity.com/profiles/76561199060925579]Dmitry6[/url] for the Russian translation!
