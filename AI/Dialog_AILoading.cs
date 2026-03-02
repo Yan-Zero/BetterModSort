@@ -8,6 +8,15 @@ using Verse;
 
 namespace BetterModSort.AI
 {
+    /// <summary>
+    /// 标识触发 AI 排序的来源 ModManager 类型。
+    /// </summary>
+    public enum SortInvoker
+    {
+        Vanilla,
+        ModManager,
+        Prestarter,
+    }
     public class SoftConstraintInfo
     {
         public string? PackageId;
@@ -59,13 +68,13 @@ namespace BetterModSort.AI
         private bool _completed = false;
         private bool _failed = false;
 
-        private bool _isModManagerInvoked = false;
+        private readonly SortInvoker _invoker;
 
         public override Vector2 InitialSize => new Vector2(400f, 150f);
 
-        public Dialog_AILoading(bool isModManagerInvoked = false)
+        public Dialog_AILoading(SortInvoker invoker = SortInvoker.Vanilla)
         {
-            this._isModManagerInvoked = isModManagerInvoked;
+            this._invoker = invoker;
             this.forcePause = true;
             this.absorbInputAroundWindow = true;
             this.closeOnClickedOutside = false;
@@ -248,13 +257,50 @@ namespace BetterModSort.AI
         {
             if (constraints == null) return;
 
-            if (_isModManagerInvoked)
+            if (_invoker == SortInvoker.ModManager)
             {
-                ModManagerPatch.ApplyConstraintsToModManagerAndSort(constraints);
+                var sortedIds = ModManagerPatch.ApplyConstraintsToModManagerAndSort(constraints);
+                TryExportRimSort(sortedIds);
                 return;
             }
 
-            var allMods = ModsConfig.ActiveModsInLoadOrder.ToList();
+            if (_invoker == SortInvoker.Prestarter)
+            {
+                var allMods = ModsConfig.ActiveModsInLoadOrder.ToList();
+                // Prestarter 使用与 Vanilla 相同的 ModMetaData 注入机制
+                InjectConstraintsIntoModMetaData(constraints, allMods);
+                var sortedIds = PrestarterPatch.ApplyConstraintsToPrestarterAndSort(constraints);
+                TryExportRimSort(sortedIds);
+                return;
+            }
+
+            // ===== Vanilla 路径 =====
+            var vanillaMods = ModsConfig.ActiveModsInLoadOrder.ToList();
+            InjectConstraintsIntoModMetaData(constraints, vanillaMods);
+
+            // 标记，让 Prefix 能够放行
+            ModsConfig_TrySortMods_Patch.ExecuteVanillaSort = true;
+            try
+            {
+                ModsConfig.TrySortMods();
+            }
+            finally
+            {
+                ModsConfig_TrySortMods_Patch.ExecuteVanillaSort = false;
+            }
+
+            var vanillaIds = ModsConfig.ActiveModsInLoadOrder
+                .Select(m => m.PackageId)
+                .ToList();
+            TryExportRimSort(vanillaIds);
+        }
+
+        /// <summary>
+        /// 将 AI 约束注入到 ModMetaData 的 ForceLoadBefore / ForceLoadAfter / IncompatibleWith。
+        /// Vanilla 和 Prestarter 路径共用此方法。
+        /// </summary>
+        private static void InjectConstraintsIntoModMetaData(List<SoftConstraintInfo> constraints, List<ModMetaData> allMods)
+        {
 
             // 1. 构建 packageId → index 映射
             var idToIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -338,17 +384,12 @@ namespace BetterModSort.AI
 
             if (skipped > 0)
                 Log.Warning($"[BetterModSort] {skipped} AI constraint(s) were skipped to prevent cyclic dependencies.");
+        }
 
-            // 标记，让 Prefix 能够放行
-            ModsConfig_TrySortMods_Patch.ExecuteVanillaSort = true;
-            try
-            {
-                ModsConfig.TrySortMods();
-            }
-            finally
-            {
-                ModsConfig_TrySortMods_Patch.ExecuteVanillaSort = false;
-            }
+        private static void TryExportRimSort(IEnumerable<string> sortedPackageIds)
+        {
+            if (BetterModSortMod.Settings.EnableRimSortExport)
+                RimSortExporter.ExportCurrentLoadOrder(sortedPackageIds);
         }
 
         /// <summary>

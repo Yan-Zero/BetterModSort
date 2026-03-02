@@ -22,6 +22,8 @@
   <BMS_Settings_SectionExperimental>── Experimental Features ──</BMS_Settings_SectionExperimental>
   <BMS_Settings_EnableAISorting>Enable AI-assisted sorting (Experimental, replaces vanilla auto-sort)</BMS_Settings_EnableAISorting>
   <BMS_Settings_EnableAISortingDesc>When enabled, clicking "Auto-sort" will call an LLM to generate soft constraints, then use vanilla topological sort. When disabled, vanilla sorting is used.</BMS_Settings_EnableAISortingDesc>
+  <BMS_Settings_EnableRimSortExport>Export RimSort XML after AI sort (Experimental)</BMS_Settings_EnableRimSortExport>
+  <BMS_Settings_EnableRimSortExportDesc>When enabled, after each AI-assisted sort completes, the current active mod list is automatically saved as a RimSort-compatible XML file in the BetterModSort data folder.</BMS_Settings_EnableRimSortExportDesc>
   <BMS_Settings_LabelErrorLogMaxChars>Max error log chars sent to AI</BMS_Settings_LabelErrorLogMaxChars>
   <BMS_Settings_LabelShortDescMaxChars>Max raw description chars for summary extraction</BMS_Settings_LabelShortDescMaxChars>
   <BMS_Settings_LabelShortDescBypassThreshold>Bypass AI extraction for mods with descriptions shorter than this length (send raw text instead)</BMS_Settings_LabelShortDescBypassThreshold>

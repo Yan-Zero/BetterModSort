@@ -218,9 +218,7 @@ namespace BetterModSort.Core.ErrorAnalysis.Enrichers
                             sb.AppendLine($"       File: {usage.FilePath}");
                     }
                     else
-                    {
                         sb.AppendLine($"     - {usage.NodePath}");
-                    }
                 }
             }
 

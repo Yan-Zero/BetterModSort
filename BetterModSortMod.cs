@@ -210,6 +210,9 @@ namespace BetterModSort
             listing.CheckboxLabeled("BMS_Settings_EnableAISorting".TranslateSafe(), ref Settings.EnableAISorting,
                 "BMS_Settings_EnableAISortingDesc".TranslateSafe());
             
+            listing.CheckboxLabeled("BMS_Settings_EnableRimSortExport".TranslateSafe(), ref Settings.EnableRimSortExport,
+                "BMS_Settings_EnableRimSortExportDesc".TranslateSafe());
+            
             DrawLabeledNumberEntry(listing, "BMS_Settings_LabelErrorLogMaxChars".TranslateSafe(), ref Settings.ErrorLogMaxChars, 1);
             DrawLabeledNumberEntry(listing, "BMS_Settings_LabelShortDescMaxChars".TranslateSafe(), ref Settings.ShortDescMaxChars, 1);
             DrawLabeledNumberEntry(listing, "BMS_Settings_LabelShortDescBypassThreshold".TranslateSafe(), ref Settings.ShortDescBypassThreshold, 0);

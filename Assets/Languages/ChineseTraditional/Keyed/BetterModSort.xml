@@ -22,6 +22,8 @@
   <BMS_Settings_SectionExperimental>── 實驗性功能 ──</BMS_Settings_SectionExperimental>
   <BMS_Settings_EnableAISorting>啟用 AI 輔助排序（實驗性，替代原版自動排序按鈕）</BMS_Settings_EnableAISorting>
   <BMS_Settings_EnableAISortingDesc>開啟後，點擊「自動排序」將呼叫大模型產生軟約束，再由原版拓樸排序引擎執行。關閉時使用原版排序。</BMS_Settings_EnableAISortingDesc>
+  <BMS_Settings_EnableRimSortExport>AI 排序完成後匯出 RimSort XML（實驗性）</BMS_Settings_EnableRimSortExport>
+  <BMS_Settings_EnableRimSortExportDesc>開啟後，每次 AI 排序完成時，會自動將當前啟用的 MOD 清單儲存為 RimSort 相容的 XML 檔案，存放在 BetterModSort 資料夾下。</BMS_Settings_EnableRimSortExportDesc>
   <BMS_Settings_LabelErrorLogMaxChars>發送給 AI 的報錯日誌最大字元數</BMS_Settings_LabelErrorLogMaxChars>
   <BMS_Settings_LabelShortDescMaxChars>提煉短描述時截取原始描述的最大字元數</BMS_Settings_LabelShortDescMaxChars>
   <BMS_Settings_LabelShortDescBypassThreshold>低於此字數的 MOD 不會呼叫 AI 提煉短描述，直接發送原文</BMS_Settings_LabelShortDescBypassThreshold>

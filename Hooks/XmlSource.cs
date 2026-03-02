@@ -153,14 +153,14 @@ namespace BetterModSort.Hooks
         static void Postfix()
         {
             // 延迟清理，确保所有错误已经处理完毕
-            LongEventHandler.QueueLongEvent(() =>
-            {
-                int defCount = DefSourceMap.Map.Count;
-                int bucketCount = XmlBuckets.ByDefName.Count;
-                int patchCount = PatchSourceMap.ByDefName.Count;
-                XmlTrackingCleanup.ClearAll();
-                Log.Message("[BetterModSort] " + "BMS_Log_XmlTrackerCleared".TranslateSafe(defCount, bucketCount, patchCount));
-            }, null, false, null);
+            // LongEventHandler.QueueLongEvent(() =>
+            // {
+            //     int defCount = DefSourceMap.Map.Count;
+            //     int bucketCount = XmlBuckets.ByDefName.Count;
+            //     int patchCount = PatchSourceMap.ByDefName.Count;
+            //     XmlTrackingCleanup.ClearAll();
+            //     Log.Message("[BetterModSort] " + "BMS_Log_XmlTrackerCleared".TranslateSafe(defCount, bucketCount, patchCount));
+            // }, null, false, null);
         }
     }
 }

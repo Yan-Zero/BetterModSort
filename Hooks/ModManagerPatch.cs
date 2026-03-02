@@ -110,9 +110,7 @@ namespace BetterModSort.Hooks
             {
                 var issues = _issuesGetter.Invoke(null, null) as IEnumerable;
                 if (issues != null)
-                {
                     foreach (var issue in issues)
-                    {
                         if (issue != null)
                         {
                             var severity = (int)_severityProp.GetValue(issue);
@@ -122,8 +120,6 @@ namespace BetterModSort.Hooks
                                 break;
                             }
                         }
-                    }
-                }
             }
 
             // If there are real issues, let ModManager's Close() run (which will show the warning dialog)
@@ -141,21 +137,22 @@ namespace BetterModSort.Hooks
                 return true;
             if (!BetterModSortMod.Settings.EnableAISorting)
                 return true;
-            Find.WindowStack.Add(new Dialog_AILoading(isModManagerInvoked: true));
+            Find.WindowStack.Add(new Dialog_AILoading(SortInvoker.ModManager));
             return false;
         }
 
         /// <summary>
         /// Reads ModManager.ModButtonManager.ActiveButtons and writes dependencies.
         /// </summary>
-        public static void ApplyConstraintsToModManagerAndSort(List<SoftConstraintInfo> constraints)
+        public static List<string> ApplyConstraintsToModManagerAndSort(List<SoftConstraintInfo> constraints)
         {
+            var sortedIds = new List<string>();
             try
             {
-                if (_modButtonManagerType == null || _activeButtonsGetter == null) return;
+                if (_modButtonManagerType == null || _activeButtonsGetter == null) return sortedIds;
 
                 var activeButtons = (IEnumerable)_activeButtonsGetter.Invoke(null, null);
-                if (activeButtons == null) return;
+                if (activeButtons == null) return sortedIds;
 
                 // Cache Manifest elements by packageId
                 var manifestDict = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
@@ -205,11 +202,27 @@ namespace BetterModSort.Hooks
                         ExecuteModManagerSort = false;
                     }
                 }
+
+                // 排序后读取 ActiveButtons 收集经过 ModManager 排序的 packageId
+                if (_modButtonManagerType != null && _activeButtonsGetter != null)
+                {
+                    var postSortButtons = (IEnumerable)_activeButtonsGetter.Invoke(null, null);
+                    if (postSortButtons != null && _btnModProp != null)
+                    {
+                        foreach (var btn in postSortButtons)
+                        {
+                            if (btn == null) continue;
+                            if (_btnModProp.Invoke(btn, null) is ModMetaData mod && !string.IsNullOrEmpty(mod.PackageId))
+                                sortedIds.Add(mod.PackageId);
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
                 Log.Error($"[BetterModSort] Failed to write constraints to ModManager: {ex}");
             }
+            return sortedIds;
         }
     }
 }

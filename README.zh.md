@@ -54,33 +54,17 @@
 - **CE 兼容性归因** — 针对 `no support for Combat Extended` 的报错，通过深度反查异常堆栈的参数，精准揪出没有兼容 CE 的具体物品或种族 Def 来源。
 - **文件路径与创意工坊 ID 提取** — 从 `Cannot load texture` 或找不到文件的红字里提取本地路径字符串，通过匹配启用 MOD 的根目录或解析路径中的 Steam 创意工坊 ID 来定位对应 MOD。
 
-分析结果会保存到存档目录下的 `BetterModSort.Error.txt`，上次的会备份为 `BetterModSort.Error.prev.txt`。同时也会在游戏控制台（按 `~` 打开）里输出格式化的报告，大概长这样：
+分析结果会保存到存档目录下的 `BetterModSort.Error.txt`，上次的会备份为 `BetterModSort.Error.prev.txt`。
 
-```text
-Could not resolve cross-reference to Verse.WorkTypeDef named DoctorRescue (wanter=workTypes)
-  -> [交叉引用被使用: DoctorRescue]
-     - [Mod: Project RimFactory - Drones (spdskatr.projectrimfactory.drones)] Defs/ThingDef[defName=WarDroneStation]/modExtensions/li/workTypes
-       File: D:\SteamLibrary\steamapps\workshop\content\294100\2037491557\Defs\ThingDefs_Buildings\Buildings_DroneStation.xml
-  -> [Patch 可能涉及: WarDroneStation]
-     - [Mod: Project RimFactory - Drones (spdskatr.projectrimfactory.drones)] PatchOperationAdd (FindMod: Achtung!)
-```
+> [!IMPORTANT]
+> **关于错误报告的建议**：如果您需要向其他 Mod 作者报告问题，请务必提供完整的 `Player.log` 文件或直接复制日志窗口中的原始红字详情。本 Mod 生成的 `BetterModSort.Error.txt` 仅包含用于 AI 排序和快速参考的分析摘要，可能会缺失作者修复 Bug 所需的关键技术细节。
 
-```text
-[BetterModSort] ========== 错误分析 ==========
-时间: 10:10:20
-错误: Trying to get stat MeleeDamageAverage from TM_GloryMaul which has no support for Combat Extended.
-涉及的 MOD (3):
-  - [ceteam.combatextended] Combat Extended
-    DLL: CombatExtended
-    位置: CombatExtended.StatWorker_MeleeDamageAverage.GetValueUnfinalized
-  - [andromeda.nicebilltab] Nice Bill Tab
-    DLL: NiceBillTab
-    位置: NiceBillTab.StatRequestWorker.GetDPS
-  - [ilyvion.loadingprogress] Loading Progress
-    DLL: ilyvion.LoadingProgress
-    位置: ilyvion.LoadingProgress.StaticConstructorOnStartupUtilityReplacement+d__2.MoveNext
-=====================================
-```
+---
+
+## 兼容性与外部工具支持
+
+- 完美兼容 **Mod Manager (模组管理器)** 及 **Prestarter**。当你在设置中开启了 AI 排序功能后，直接点击管理器自带的“自动排序”按钮，就会无缝唤起本程序的 AI 排序流程并应用！
+- **RimSort 导出**：支持在实验性设置中开启“排序后导出 RimSort XML”，每次 AI 排序完成都会自动将当前有序列表保存为兼容 RimSort 格式的 XML 文件。
 
 ---
 
@@ -155,12 +139,15 @@ BetterModSort/
 ├── Hooks/
 │   ├── ErrorCaptureHook.cs    # 错误发生时的拦截入口
 │   ├── LogPatch.cs            # Hook Log.Error / ErrorOnce
-│   ├── ModsConfigPatch.cs     # 替换自动排序 & 重复 MOD 检测
+│   ├── ModManagerPatch.cs     # 拦截 ModManager 的排序调用
+│   ├── ModsConfigPatch.cs     # 替换原版自动排序
+│   ├── PrestarterPatch.cs     # 拦截 Prestarter 的排序调用
 │   └── XmlSource.cs           # Hook 游戏资源加载以建立追踪
 ├── Tools/
 │   ├── DllLookupTool.cs       # DLL ↔ MOD 映射
 │   ├── I18n.cs                # 早期多语言加载
 │   ├── ModInfo.cs             # 统一的 MOD 信息实体
+│   ├── RimSortExporter.cs     # 导出排序结果至 RimSort XML
 │   └── XmlSourceMap.cs        # Def/Patch 的来源追踪储存字典
 ├── BetterModSortMod.cs        # MOD 入口
 └── BetterModSortSettings.cs   # 设置定义

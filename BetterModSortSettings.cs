@@ -26,6 +26,11 @@ namespace BetterModSort
         public bool EnableAISorting = false;
 
         /// <summary>
+        /// 实验性功能：AI 排序完成后，导出符合 RimSort 规范的 XML 文件
+        /// </summary>
+        public bool EnableRimSortExport = false;
+
+        /// <summary>
         /// 调试模式：开启后在文件中 Dump LLM 的原始请求和响应
         /// </summary>
         public bool EnableDebugDump = false;
@@ -69,6 +74,7 @@ namespace BetterModSort
             }
 
             Scribe_Values.Look(ref EnableAISorting, "EnableAISorting", false);
+            Scribe_Values.Look(ref EnableRimSortExport, "EnableRimSortExport", false);
             Scribe_Values.Look(ref EnableDebugDump, "EnableDebugDump", false);
             Scribe_Values.Look(ref ErrorLogMaxChars, "ErrorLogMaxChars", 8000);
             Scribe_Values.Look(ref ShortDescMaxChars, "ShortDescMaxChars", 2500);

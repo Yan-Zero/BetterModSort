@@ -107,10 +107,9 @@ namespace BetterModSort.Tools
     {
         public static void ClearAll()
         {
-            //DefSourceMap.Clear();
+            DefSourceMap.Clear();
             XmlBuckets.Clear();
             PatchSourceMap.Clear();
-            // To Keep Message?
         }
     }
 

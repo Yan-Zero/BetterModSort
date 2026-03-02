@@ -43,7 +43,9 @@
 - [b]CE 兼容性归因[/b] — 针对 `no support for Combat Extended` 的报错，通过深度反查异常堆栈的参数，精准揪出没有兼容 CE 的具体物品或种族 Def 来源。
 - [b]文件路径与创意工坊 ID 提取[/b] — 从 `Cannot load texture` 或找不到文件的红字里提取本地路径字符串，通过匹配启用 MOD 的根目录或解析路径中的 Steam 创意工坊 ID 来定位对应 MOD。
 
-分析结果会保存到存档目录下的 `BetterModSort.Error.txt`，上次的会备份为 `BetterModSort.Error.prev.txt`。同时也会在游戏控制台（按 `~` 打开）里输出格式化的报告，大概长这样：
+分析结果会保存到存档目录下的 `BetterModSort.Error.txt`，上次的会备份为 `BetterModSort.Error.prev.txt`。
+
+[b]！注意[/b]：如果您需要向其他 Mod 作者报告错误（特别是报错 Mod 的作者），请务必提供完整的 [b]Player.log[/b] 文件或直接复制日志窗口中的原始红字详情。本 MOD 生成的 [b]BetterModSort.Error.txt[/b] 仅包含用于 AI 排序和快速参考的分析摘要，可能会缺失作者修复 BUG 所需的关键技术细节。
 
 （XML 相关）
 ```
@@ -75,8 +77,9 @@ Could not resolve cross-reference to Verse.WorkTypeDef named DoctorRescue (wante
 
 [hr][/hr]
 
-[b]兼容性[/b]
-- 完美兼容 [b]Mod Manager (模组管理器)[/b]。当你在本 MOD 的设置中开启了 AI 排序功能后，直接点击 Mod Manager 自带的那个“自动排序”按钮，就会无缝唤起本程序的 AI 排序流程并应用！
+[b]兼容性与外部工具支持[/b]
+- 完美兼容 [b]Mod Manager (模组管理器)[/b] 及 [b]Prestarter[/b]。当你在本 MOD 的设置中开启了 AI 排序功能后，直接点击管理器自带的“自动排序”按钮，就会无缝唤起本程序的 AI 排序流程并应用！
+- [b]RimSort 导出[/b]：支持在实验性设置中开启“排序后导出 RimSort XML”，每次 AI 排序完成都会自动将当前激活的 MOD 列表保存为兼容 RimSort 格式的 XML 文件。
 
 [hr][/hr]
 
